@@ -169,7 +169,7 @@ export default function CardGrid({ session }) {
                                 <div
                                     key={pokemon.id}
                                     onClick={() => setSelectedPokemon(pokemon)}
-                                    className={`relative aspect-square rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${isOwned
+                                    className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${isOwned
                                         ? 'bg-neutral-900 ring-2 ring-red-500 shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30 hover:-translate-y-1'
                                         : 'bg-neutral-900/50 hover:bg-neutral-900 hover:shadow-lg hover:-translate-y-0.5'
                                         }`}

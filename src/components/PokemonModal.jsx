@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
-import { X, Upload, Image as ImageIcon, Check } from 'lucide-react'
+import { X, Upload, Image as ImageIcon, Check, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 
 export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, session }) {
     const [uploading, setUploading] = useState(false)
+    const [imageToDelete, setImageToDelete] = useState(null)
     const fileInputRef = useRef(null)
 
     if (!pokemon) return null
@@ -106,6 +107,102 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
         }
     }
 
+    const confirmDelete = (index) => {
+        setImageToDelete(index)
+    }
+
+    const cancelDelete = () => {
+        setImageToDelete(null)
+    }
+
+    const deleteImage = async (index) => {
+        console.log('deleteImage called with index:', index)
+        setImageToDelete(null) // Clear confirmation state
+
+        try {
+            const urlToDelete = userCard.image_urls[index]
+            console.log('urlToDelete:', urlToDelete)
+
+            let bucketName = 'Carte'
+            let path = ''
+
+            // Extract path based on bucket name
+            if (urlToDelete.includes('/Carte/')) {
+                path = urlToDelete.split('/Carte/')[1]
+            } else if (urlToDelete.includes('/pokemon-cards/')) {
+                bucketName = 'pokemon-cards'
+                path = urlToDelete.split('/pokemon-cards/')[1]
+            } else {
+                console.warn("Could not parse bucket from URL, attempting to delete from DB only:", urlToDelete)
+            }
+
+            // Clean path (remove leading slash if present)
+            if (path && path.startsWith('/')) {
+                path = path.substring(1)
+            }
+
+            console.log('Deleting from bucket:', bucketName, 'path:', path)
+
+            // Only attempt storage deletion if we identified the path
+            if (path) {
+                // Remove from Storage
+                const { data, error: storageError } = await supabase.storage
+                    .from(bucketName)
+                    .remove([path])
+
+                if (storageError) {
+                    console.error('Storage delete error:', storageError)
+                    // Continue to remove from DB even if storage fails (orphan cleanup)
+                } else {
+                    console.log('Storage delete success:', data)
+                }
+            }
+
+            // Update Database
+            const newUrls = userCard.image_urls.filter((_, i) => i !== index)
+            let newCoverIndex = userCard.cover_image_index
+
+            // Adjust cover index
+            if (index === userCard.cover_image_index) {
+                newCoverIndex = 0
+            } else if (index < userCard.cover_image_index) {
+                newCoverIndex -= 1
+            }
+
+            // Safety check for empty array
+            if (newUrls.length === 0) {
+                newCoverIndex = 0
+            }
+
+            const updates = {
+                ...userCard,
+                user_id: session.user.id,
+                pokemon_id: pokemon.id,
+                image_urls: newUrls,
+                cover_image_index: newCoverIndex,
+                updated_at: new Date(),
+            }
+
+            console.log('Updating DB with:', updates)
+
+            let { error: dbError } = await supabase
+                .from('cards')
+                .upsert(updates, { onConflict: 'user_id, pokemon_id' })
+
+            if (dbError) {
+                console.error('DB Error:', dbError)
+                throw dbError
+            }
+
+            console.log('DB Update successful')
+            onUpdate()
+
+        } catch (error) {
+            console.error('Catch block error:', error)
+            alert('Error deleting image: ' + error.message)
+        }
+    }
+
     const fixSupabaseUrl = (url) => {
         if (!url) return url
         // Fix URLs for both 'Carte' and old 'pokemon-cards' bucket names
@@ -192,9 +289,46 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                     className="w-full h-full object-cover"
                                                 />
                                                 {userCard.cover_image_index === idx && (
-                                                    <div className="absolute top-2 right-2 bg-red-500 rounded-full p-1 shadow-md">
+                                                    <div className="absolute top-2 right-2 bg-red-500 rounded-full p-1 shadow-md z-10">
                                                         <Check className="w-3 h-3 text-white" />
                                                     </div>
+                                                )}
+
+                                                {imageToDelete === idx ? (
+                                                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm animate-in fade-in duration-200">
+                                                        <p className="text-white text-xs font-medium">Delete?</p>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    deleteImage(idx)
+                                                                }}
+                                                                className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full transition-colors"
+                                                            >
+                                                                <Check className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    cancelDelete()
+                                                                }}
+                                                                className="bg-neutral-600 hover:bg-neutral-500 text-white p-1.5 rounded-full transition-colors"
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            confirmDelete(idx)
+                                                        }}
+                                                        className="absolute top-2 left-2 bg-black/50 hover:bg-red-600 rounded-full p-1.5 transition-colors z-10 opacity-0 group-hover:opacity-100"
+                                                        title="Delete image"
+                                                    >
+                                                        <Trash2 className="w-3 h-3 text-white" />
+                                                    </button>
                                                 )}
                                             </div>
                                         ))}
