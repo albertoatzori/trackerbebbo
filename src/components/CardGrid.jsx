@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Filter, Grid, Image as ImageIcon } from 'lucide-react'
+import { Search, Grid, Image as ImageIcon } from 'lucide-react'
 import PokemonModal from './PokemonModal'
 import { supabase } from '../lib/supabaseClient'
 
@@ -8,9 +8,9 @@ export default function CardGrid({ session }) {
     const [userCards, setUserCards] = useState({})
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
-    const [showCards, setShowCards] = useState(false) // Global toggle
+    const [showCards, setShowCards] = useState(false)
     const [selectedPokemon, setSelectedPokemon] = useState(null)
-    const [filterOwned, setFilterOwned] = useState('all') // all, owned, missing
+    const [filterOwned, setFilterOwned] = useState('all')
 
     useEffect(() => {
         fetchData()
@@ -19,11 +19,9 @@ export default function CardGrid({ session }) {
     const fetchData = async () => {
         try {
             setLoading(true)
-            // 1. Fetch 151 Pokemon
             const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151')
             const data = await res.json()
 
-            // Enhance with ID for easier lookup
             const enhancedList = data.results.map((p, index) => ({
                 ...p,
                 id: index + 1,
@@ -32,10 +30,7 @@ export default function CardGrid({ session }) {
                 }
             }))
             setPokemonList(enhancedList)
-
-            // 2. Fetch User Cards
             fetchUserCards()
-
         } catch (error) {
             console.error('Error fetching data:', error)
         } finally {
@@ -62,7 +57,8 @@ export default function CardGrid({ session }) {
 
     const filteredPokemon = pokemonList.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || String(p.id).includes(searchTerm)
-        const isOwned = !!userCards[p.id]
+        const userCard = userCards[p.id]
+        const isOwned = userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0) // Fallback for old records
 
         if (filterOwned === 'owned' && !isOwned) return false
         if (filterOwned === 'missing' && isOwned) return false
@@ -72,49 +68,68 @@ export default function CardGrid({ session }) {
 
     const stats = {
         total: 151,
-        owned: Object.keys(userCards).length,
-        percentage: Math.round((Object.keys(userCards).length / 151) * 100)
+        owned: Object.values(userCards).filter(c => c.status === 'owned' || (!c.status && c.image_urls?.length > 0)).length,
+        percentage: Math.round((Object.values(userCards).filter(c => c.status === 'owned' || (!c.status && c.image_urls?.length > 0)).length / 151) * 100)
     }
 
     return (
-        <div className="min-h-screen bg-gray-950 text-gray-100 pb-20">
-            {/* Sticky Header */}
-            <div className="sticky top-0 z-40 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 p-4 shadow-lg">
-                <div className="max-w-7xl mx-auto space-y-4">
+        <div className="min-h-screen bg-neutral-950 text-white pb-20">
+            {/* Material App Bar */}
+            <div className="sticky top-0 z-40 bg-neutral-900/95 backdrop-blur-lg border-b border-neutral-800 shadow-xl">
+                <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+                    {/* Top Row */}
                     <div className="flex items-center justify-between">
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-                            Kanto Tracker
-                        </h1>
-                        <div className="text-xs font-mono text-gray-400">
-                            {stats.owned} / {stats.total} ({stats.percentage}%)
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
+                                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="3" />
+                                    <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold text-white">Kanto Tracker</h1>
+                                <p className="text-xs text-neutral-400">Pokémon Collection</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-2xl font-bold text-white">{stats.percentage}%</div>
+                            <div className="text-xs text-neutral-400">{stats.owned} / {stats.total}</div>
                         </div>
                     </div>
 
+                    {/* Search and Toggle */}
                     <div className="flex gap-2">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
                             <input
                                 type="text"
                                 placeholder="Search Pokémon..."
-                                className="w-full pl-9 pr-4 py-2 bg-gray-800 rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none text-sm"
+                                className="w-full pl-12 pr-4 py-3 bg-neutral-800 border border-neutral-700 rounded-full text-white placeholder-neutral-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
                         <button
                             onClick={() => setShowCards(!showCards)}
-                            className={`p-2 rounded-lg border transition-colors ${showCards ? 'bg-red-500/10 border-red-500 text-red-500' : 'bg-gray-800 border-gray-700 text-gray-400'}`}
+                            className={`p-3 rounded-full transition-all ${showCards
+                                ? 'bg-red-600 text-white shadow-lg'
+                                : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
+                                }`}
                         >
                             {showCards ? <ImageIcon className="w-5 h-5" /> : <Grid className="w-5 h-5" />}
                         </button>
                     </div>
 
+                    {/* Filter Chips */}
                     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                         {['all', 'owned', 'missing'].map(filter => (
                             <button
                                 key={filter}
                                 onClick={() => setFilterOwned(filter)}
-                                className={`px-3 py-1 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-colors ${filterOwned === filter ? 'bg-white text-black' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                                className={`px-4 py-2 rounded-full text-sm font-medium capitalize whitespace-nowrap transition-all ${filterOwned === filter
+                                    ? 'bg-red-600 text-white shadow-lg'
+                                    : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
+                                    }`}
                             >
                                 {filter}
                             </button>
@@ -127,45 +142,62 @@ export default function CardGrid({ session }) {
             <div className="max-w-7xl mx-auto p-4">
                 {loading ? (
                     <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent"></div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                         {filteredPokemon.map(pokemon => {
                             const userCard = userCards[pokemon.id]
-                            const isOwned = !!userCard
-                            const displayImage = (showCards && isOwned && userCard.image_urls?.length > 0)
-                                ? userCard.image_urls[userCard.cover_image_index || 0]
+                            const isOwned = userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0)
+                            const fixSupabaseUrl = (url) => {
+                                if (!url) return url
+                                // Fix URLs for both 'Carte' and old 'pokemon-cards' bucket names
+                                if (url.includes('/storage/v1/object/Carte/') && !url.includes('/public/')) {
+                                    return url.replace('/object/Carte/', '/object/public/Carte/')
+                                }
+                                if (url.includes('/storage/v1/object/pokemon-cards/') && !url.includes('/public/')) {
+                                    return url.replace('/object/pokemon-cards/', '/object/public/pokemon-cards/')
+                                }
+                                return url
+                            }
+
+                            const displayImage = (showCards && userCard?.image_urls?.length > 0)
+                                ? fixSupabaseUrl(userCard.image_urls[userCard.cover_image_index || 0])
                                 : pokemon.sprites.front_default
 
                             return (
                                 <div
                                     key={pokemon.id}
                                     onClick={() => setSelectedPokemon(pokemon)}
-                                    className={`relative aspect-square rounded-xl bg-gray-900 border transition-all cursor-pointer hover:scale-105 active:scale-95 overflow-hidden group ${isOwned ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 'border-gray-800 opacity-70 hover:opacity-100'}`}
+                                    className={`relative aspect-square rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${isOwned
+                                        ? 'bg-neutral-900 ring-2 ring-red-500 shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30 hover:-translate-y-1'
+                                        : 'bg-neutral-900/50 hover:bg-neutral-900 hover:shadow-lg hover:-translate-y-0.5'
+                                        }`}
                                 >
-                                    <div className="absolute top-1 left-2 text-[10px] font-mono text-gray-500 z-10">
-                                        #{String(pokemon.id).padStart(3, '0')}
+                                    <div className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded-full">
+                                        <span className="text-[10px] font-mono text-white/80">
+                                            #{String(pokemon.id).padStart(3, '0')}
+                                        </span>
                                     </div>
+
                                     {isOwned && (
-                                        <div className="absolute top-1 right-1 z-10">
-                                            <div className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_5px_rgba(239,68,68,0.8)]"></div>
-                                        </div>
+                                        <div className="absolute top-2 right-2 z-10 w-3 h-3 bg-red-500 rounded-full ring-2 ring-white shadow-lg"></div>
                                     )}
 
-                                    <div className="absolute inset-0 flex items-center justify-center p-2">
+                                    <div className="absolute inset-0 flex items-center justify-center p-4">
                                         <img
                                             src={displayImage}
                                             alt={pokemon.name}
-                                            className={`w-full h-full object-contain transition-all duration-300 ${!showCards || !isOwned ? 'pixelated' : ''}`}
+                                            className={`w-full h-full object-contain transition-all duration-300 ${!showCards || !isOwned ? 'pixelated opacity-80' : ''
+                                                }`}
                                             loading="lazy"
                                         />
                                     </div>
 
-                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
-                                        <div className="text-center text-xs font-medium capitalize truncate text-gray-300 group-hover:text-white">
+                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3 pt-8">
+                                        <p className="text-sm font-medium capitalize truncate text-white">
                                             {pokemon.name}
-                                        </div>
+                                        </p>
                                     </div>
                                 </div>
                             )
@@ -179,6 +211,7 @@ export default function CardGrid({ session }) {
                 <PokemonModal
                     pokemon={selectedPokemon}
                     userCard={userCards[selectedPokemon.id]}
+                    session={session}
                     onClose={() => setSelectedPokemon(null)}
                     onUpdate={fetchUserCards}
                 />
