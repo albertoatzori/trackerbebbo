@@ -148,7 +148,7 @@ export default function CardGrid({ session }) {
                                 step="1"
                                 value={gridColumns}
                                 onChange={(e) => setGridColumns(parseInt(e.target.value))}
-                                className="w-24 h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-red-600"
+                                className="w-20 h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-red-600"
                             />
                             <ZoomIn className="w-4 h-4 text-neutral-500" />
                         </div>
