@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { X, Upload, Image as ImageIcon, Check, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 
@@ -8,6 +8,14 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     const fileInputRef = useRef(null)
 
     if (!pokemon) return null
+
+    useEffect(() => {
+        const originalStyle = window.getComputedStyle(document.body).overflow
+        document.body.style.overflow = 'hidden'
+        return () => {
+            document.body.style.overflow = originalStyle
+        }
+    }, [])
 
     const handleUpload = async (event) => {
         try {

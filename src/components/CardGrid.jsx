@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Grid, Image as ImageIcon } from 'lucide-react'
+import { Search, Grid, Image as ImageIcon, ZoomIn, ZoomOut } from 'lucide-react'
 import PokemonModal from './PokemonModal'
 import { supabase } from '../lib/supabaseClient'
 
@@ -8,9 +8,10 @@ export default function CardGrid({ session }) {
     const [userCards, setUserCards] = useState({})
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
-    const [showCards, setShowCards] = useState(false)
+    const [showCards, setShowCards] = useState(true)
     const [selectedPokemon, setSelectedPokemon] = useState(null)
     const [filterOwned, setFilterOwned] = useState('all')
+    const [gridColumns, setGridColumns] = useState(3)
 
     useEffect(() => {
         fetchData()
@@ -76,7 +77,7 @@ export default function CardGrid({ session }) {
         <div className="min-h-screen bg-neutral-950 text-white pb-20">
             {/* Material App Bar */}
             <div className="sticky top-0 z-40 bg-neutral-900/95 backdrop-blur-lg border-b border-neutral-800 shadow-xl">
-                <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+                <div className="max-w-7xl mx-auto px-4 py-2 space-y-2">
                     {/* Top Row */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -120,20 +121,37 @@ export default function CardGrid({ session }) {
                         </button>
                     </div>
 
-                    {/* Filter Chips */}
-                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                        {['all', 'owned', 'missing'].map(filter => (
-                            <button
-                                key={filter}
-                                onClick={() => setFilterOwned(filter)}
-                                className={`px-4 py-2 rounded-full text-sm font-medium capitalize whitespace-nowrap transition-all ${filterOwned === filter
-                                    ? 'bg-red-600 text-white shadow-lg'
-                                    : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
-                                    }`}
-                            >
-                                {filter}
-                            </button>
-                        ))}
+                    {/* Filters and Slider Row */}
+                    <div className="flex items-center justify-between gap-4 overflow-x-auto pb-1 scrollbar-hide">
+                        <div className="flex gap-2">
+                            {['all', 'owned', 'missing'].map(filter => (
+                                <button
+                                    key={filter}
+                                    onClick={() => setFilterOwned(filter)}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium capitalize whitespace-nowrap transition-all ${filterOwned === filter
+                                        ? 'bg-red-600 text-white shadow-lg'
+                                        : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
+                                        }`}
+                                >
+                                    {filter}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Column Slider */}
+                        <div className="flex items-center gap-2 px-2 shrink-0 border-l border-neutral-800 pl-4">
+                            <ZoomOut className="w-4 h-4 text-neutral-500" />
+                            <input
+                                type="range"
+                                min="1"
+                                max="3"
+                                step="1"
+                                value={gridColumns}
+                                onChange={(e) => setGridColumns(parseInt(e.target.value))}
+                                className="w-24 h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-red-600"
+                            />
+                            <ZoomIn className="w-4 h-4 text-neutral-500" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -145,7 +163,10 @@ export default function CardGrid({ session }) {
                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent"></div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    <div className={`grid gap-4 ${gridColumns === 1 ? 'grid-cols-1 max-w-md mx-auto' :
+                        gridColumns === 2 ? 'grid-cols-2' :
+                            'grid-cols-3'
+                        }`}>
                         {filteredPokemon.map(pokemon => {
                             const userCard = userCards[pokemon.id]
                             const isOwned = userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0)
