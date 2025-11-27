@@ -222,6 +222,11 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-neutral-800 bg-neutral-900">
                     <h2 className="text-2xl font-bold text-white capitalize flex items-center gap-3">
+                        <img
+                            src={pokemon.sprites.front_default}
+                            alt={pokemon.name}
+                            className="w-12 h-12 pixelated object-contain"
+                        />
                         <span className="text-neutral-500 text-lg font-mono">#{String(pokemon.id).padStart(3, '0')}</span>
                         {pokemon.name}
                     </h2>
@@ -232,16 +237,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
 
                 {/* Content */}
                 <div className="p-6 overflow-y-auto flex-1">
-                    <div className="flex flex-col md:flex-row gap-8">
-                        {/* Main Sprite/Image */}
-                        <div className="flex-shrink-0 flex justify-center bg-neutral-800/30 rounded-2xl p-4">
-                            <img
-                                src={pokemon.sprites.front_default}
-                                alt={pokemon.name}
-                                className="w-48 h-48 pixelated object-contain drop-shadow-xl"
-                            />
-                        </div>
-
+                    <div className="flex flex-col gap-8">
                         {/* Details & Upload */}
                         <div className="flex-1 space-y-6">
                             <div>
@@ -273,7 +269,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                 </div>
 
                                 {userCard?.image_urls?.length > 0 ? (
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-2 gap-3">
                                         {userCard.image_urls.map((url, idx) => (
                                             <div
                                                 key={idx}
@@ -348,11 +344,11 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                     onChange={handleUpload}
                                     accept="image/*"
                                     className="hidden"
-                                    disabled={uploading || (userCard?.image_urls?.length >= 5)}
+                                    disabled={uploading || (userCard?.image_urls?.length >= 4)}
                                 />
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
-                                    disabled={uploading || (userCard?.image_urls?.length >= 5)}
+                                    disabled={uploading || (userCard?.image_urls?.length >= 4)}
                                     className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
                                 >
                                     {uploading ? (
@@ -360,7 +356,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                     ) : (
                                         <>
                                             <Upload className="w-4 h-4" />
-                                            Upload Card Photo ({userCard?.image_urls?.length || 0}/5)
+                                            Upload Card Photo ({userCard?.image_urls?.length || 0}/4)
                                         </>
                                     )}
                                 </button>
