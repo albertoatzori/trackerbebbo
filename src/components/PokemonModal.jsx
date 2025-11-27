@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { X, Upload, Image as ImageIcon, Check, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
+import { compressImage } from '../utils/imageCompression'
 
 export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, session }) {
     const [uploading, setUploading] = useState(false)
@@ -24,7 +25,13 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                 throw new Error('You must select an image to upload.')
             }
 
-            const file = event.target.files[0]
+            const originalFile = event.target.files[0]
+            const compressedFile = await compressImage(originalFile, {
+                maxWidth: 1200,
+                quality: 0.7
+            })
+
+            const file = compressedFile
             const fileExt = file.name.split('.').pop()
             const fileName = `${pokemon.id}-${Math.random()}.${fileExt}`
             const filePath = `${fileName}`
