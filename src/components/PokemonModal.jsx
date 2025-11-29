@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { X, Upload, Image as ImageIcon, Check, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { compressImage } from '../utils/imageCompression'
@@ -72,6 +73,39 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
             alert(error.message)
         } finally {
             setUploading(false)
+        }
+    }
+
+    const reorderImage = async (index) => {
+        if (index === 0) return // Already at the top
+
+        try {
+            const currentUrls = [...(userCard?.image_urls || [])]
+            const selectedUrl = currentUrls[index]
+
+            // Remove from current position and add to start
+            currentUrls.splice(index, 1)
+            currentUrls.unshift(selectedUrl)
+
+            const fullUpdates = {
+                ...userCard,
+                user_id: session.user.id,
+                pokemon_id: pokemon.id,
+                image_urls: currentUrls,
+                cover_image_index: 0, // Always set to 0 as it's now the first image
+                status: userCard?.status || 'owned',
+                updated_at: new Date()
+            }
+
+            let { error: updateError } = await supabase
+                .from('cards')
+                .upsert(fullUpdates, { onConflict: 'user_id, pokemon_id' })
+
+            if (updateError) throw updateError
+            onUpdate()
+
+        } catch (error) {
+            alert(error.message)
         }
     }
 
@@ -284,65 +318,72 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                 </div>
 
                                 {userCard?.image_urls?.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {userCard.image_urls.map((url, idx) => (
-                                            <div
-                                                key={idx}
-                                                className={`relative aspect-[2/3] rounded-xl overflow-hidden border-2 cursor-pointer group transition-all ${userCard.cover_image_index === idx
-                                                    ? 'border-red-500 shadow-lg shadow-red-500/20'
-                                                    : 'border-transparent hover:border-neutral-600'
-                                                    }`}
-                                                onClick={() => setCoverImage(idx)}
-                                            >
-                                                <img
-                                                    src={fixSupabaseUrl(url)}
-                                                    alt="Card"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                                {userCard.cover_image_index === idx && (
-                                                    <div className="absolute top-2 right-2 bg-red-500 rounded-full p-1 shadow-md z-10">
-                                                        <Check className="w-3 h-3 text-white" />
-                                                    </div>
-                                                )}
-
-                                                {imageToDelete === idx ? (
-                                                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm animate-in fade-in duration-200 rounded-[10px]">
-                                                        <p className="text-white text-xs font-medium">Delete?</p>
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    deleteImage(idx)
-                                                                }}
-                                                                className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full transition-colors"
-                                                            >
-                                                                <Check className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    cancelDelete()
-                                                                }}
-                                                                className="bg-neutral-600 hover:bg-neutral-500 text-white p-1.5 rounded-full transition-colors"
-                                                            >
-                                                                <X className="w-4 h-4" />
-                                                            </button>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        <AnimatePresence>
+                                            {userCard.image_urls.map((url, idx) => (
+                                                <motion.div
+                                                    layout
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, scale: 0.8 }}
+                                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                    key={url}
+                                                    className={`relative aspect-[2/3] rounded-xl overflow-hidden border-2 cursor-pointer group transition-colors ${idx === 0
+                                                        ? 'border-red-500 shadow-lg shadow-red-500/20'
+                                                        : 'border-transparent hover:border-neutral-600'
+                                                        }`}
+                                                    onClick={() => reorderImage(idx)}
+                                                >
+                                                    <img
+                                                        src={fixSupabaseUrl(url)}
+                                                        alt="Card"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    {idx === 0 && (
+                                                        <div className="absolute top-2 right-2 bg-red-500 rounded-full p-1 shadow-md z-10">
+                                                            <Check className="w-3 h-3 text-white" />
                                                         </div>
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            confirmDelete(idx)
-                                                        }}
-                                                        className="absolute top-2 left-2 bg-black/50 hover:bg-red-600 rounded-full p-1.5 transition-colors z-10"
-                                                        title="Delete image"
-                                                    >
-                                                        <Trash2 className="w-3 h-3 text-white" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
+                                                    )}
+
+                                                    {imageToDelete === idx ? (
+                                                        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm rounded-[10px]">
+                                                            <p className="text-white text-xs font-medium">Delete?</p>
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        deleteImage(idx)
+                                                                    }}
+                                                                    className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full transition-colors"
+                                                                >
+                                                                    <Check className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        cancelDelete()
+                                                                    }}
+                                                                    className="bg-neutral-600 hover:bg-neutral-500 text-white p-1.5 rounded-full transition-colors"
+                                                                >
+                                                                    <X className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                confirmDelete(idx)
+                                                            }}
+                                                            className="absolute top-2 left-2 bg-black/50 hover:bg-red-600 rounded-full p-1.5 transition-colors z-10"
+                                                            title="Delete image"
+                                                        >
+                                                            <Trash2 className="w-3 h-3 text-white" />
+                                                        </button>
+                                                    )}
+                                                </motion.div>
+                                            ))}
+                                        </AnimatePresence>
                                     </div>
                                 ) : (
                                     <div className="text-gray-500 italic text-sm border border-dashed border-gray-700 rounded-lg p-4 text-center">
