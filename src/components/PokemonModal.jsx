@@ -306,7 +306,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                 )}
 
                                                 {imageToDelete === idx ? (
-                                                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm animate-in fade-in duration-200">
+                                                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm animate-in fade-in duration-200 rounded-[10px]">
                                                         <p className="text-white text-xs font-medium">Delete?</p>
                                                         <div className="flex gap-2">
                                                             <button
@@ -335,7 +335,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                             e.stopPropagation()
                                                             confirmDelete(idx)
                                                         }}
-                                                        className="absolute top-2 left-2 bg-black/50 hover:bg-red-600 rounded-full p-1.5 transition-colors z-10 opacity-0 group-hover:opacity-100"
+                                                        className="absolute top-2 left-2 bg-black/50 hover:bg-red-600 rounded-full p-1.5 transition-colors z-10"
                                                         title="Delete image"
                                                     >
                                                         <Trash2 className="w-3 h-3 text-white" />
