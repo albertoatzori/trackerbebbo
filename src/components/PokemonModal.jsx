@@ -1,12 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Upload, Image as ImageIcon, Check, Trash2 } from 'lucide-react'
+import { X, Upload, Image as ImageIcon, Check, Trash2, Edit2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { compressImage } from '../utils/imageCompression'
 
 export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, session }) {
     const [uploading, setUploading] = useState(false)
     const [imageToDelete, setImageToDelete] = useState(null)
+    const [editingImage, setEditingImage] = useState(null)
+    const [editFormData, setEditFormData] = useState({
+        type: 'sbustata',
+        price: '',
+        expansionSet: ''
+    })
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const fileInputRef = useRef(null)
 
     if (!pokemon) return null
@@ -167,6 +174,8 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     const deleteImage = async (index) => {
         console.log('deleteImage called with index:', index)
         setImageToDelete(null) // Clear confirmation state
+        setShowDeleteConfirm(false)
+        setEditingImage(null)
 
         try {
             const urlToDelete = userCard.image_urls[index]
@@ -209,6 +218,12 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
 
             // Update Database
             const newUrls = userCard.image_urls.filter((_, i) => i !== index)
+
+            // Remove metadata for the deleted image
+            const currentMetadata = userCard.card_metadata || {}
+            const newMetadata = { ...currentMetadata }
+            delete newMetadata[urlToDelete]
+
             let newCoverIndex = userCard.cover_image_index
 
             // Adjust cover index
@@ -228,6 +243,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                 user_id: session.user.id,
                 pokemon_id: pokemon.id,
                 image_urls: newUrls,
+                card_metadata: newMetadata,
                 cover_image_index: newCoverIndex,
                 updated_at: new Date(),
             }
@@ -249,6 +265,54 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
         } catch (error) {
             console.error('Catch block error:', error)
             alert('Error deleting image: ' + error.message)
+        }
+    }
+
+    const handleEditClick = (index) => {
+        const url = userCard.image_urls[index]
+        const metadata = userCard.card_metadata?.[url] || {}
+        setEditFormData({
+            type: metadata.type || 'sbustata',
+            price: metadata.price || '',
+            expansionSet: metadata.expansionSet || ''
+        })
+        setEditingImage(index)
+        setShowDeleteConfirm(false)
+    }
+
+    const handleSaveDetails = async () => {
+        try {
+            const url = userCard.image_urls[editingImage]
+            const currentMetadata = userCard.card_metadata || {}
+
+            const newMetadata = {
+                ...currentMetadata,
+                [url]: {
+                    type: editFormData.type,
+                    price: editFormData.price,
+                    expansionSet: editFormData.expansionSet
+                }
+            }
+
+            const updates = {
+                ...userCard,
+                user_id: session.user.id,
+                pokemon_id: pokemon.id,
+                status: 'owned',
+                card_metadata: newMetadata,
+                updated_at: new Date()
+            }
+
+            const { error } = await supabase
+                .from('cards')
+                .upsert(updates, { onConflict: 'user_id, pokemon_id' })
+
+            if (error) throw error
+
+            onUpdate()
+            setEditingImage(null)
+        } catch (error) {
+            alert(error.message)
         }
     }
 
@@ -378,13 +442,34 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation()
-                                                                confirmDelete(idx)
+                                                                handleEditClick(idx)
                                                             }}
-                                                            className="absolute top-2 left-2 bg-black/50 hover:bg-red-600 rounded-full p-1.5 transition-colors z-10"
-                                                            title="Delete image"
+                                                            className="absolute top-2 left-2 bg-black/50 hover:bg-blue-600 rounded-full p-1.5 transition-colors z-10"
+                                                            title="Edit details"
                                                         >
-                                                            <Trash2 className="w-3 h-3 text-white" />
+                                                            <Edit2 className="w-3 h-3 text-white" />
                                                         </button>
+                                                    )}
+
+                                                    {/* Metadata Label */}
+                                                    {userCard.card_metadata?.[url] && (
+                                                        <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-[2px] p-2 text-white text-xs z-10">
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="capitalize font-semibold truncate">
+                                                                    {userCard.card_metadata[url].type}
+                                                                </span>
+                                                                {userCard.card_metadata[url].type === 'comprata' && userCard.card_metadata[url].price && (
+                                                                    <span className="text-green-400 font-mono">
+                                                                        €{userCard.card_metadata[url].price}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {userCard.card_metadata[url].expansionSet && (
+                                                                <div className="text-neutral-300 truncate text-[10px] mt-0.5">
+                                                                    {userCard.card_metadata[url].expansionSet}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </motion.div>
                                             ))}
@@ -426,6 +511,105 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                     </div>
                 </div>
             </div>
+
+            {/* Edit Modal Overlay */}
+            {editingImage !== null && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-neutral-900 rounded-2xl border border-neutral-800 shadow-2xl w-full max-w-md overflow-hidden">
+                        <div className="p-4 border-b border-neutral-800 flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-white">Edit Card Details</h3>
+                            <button
+                                onClick={() => setEditingImage(null)}
+                                className="text-neutral-400 hover:text-white"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            {/* Acquisition Type */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-neutral-400">Acquisition Type</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['sbustata', 'comprata', 'scambiata', 'regalata'].map((type) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setEditFormData(prev => ({ ...prev, type }))}
+                                            className={`p-2 rounded-lg text-sm font-medium capitalize transition-colors border ${editFormData.type === type
+                                                    ? 'bg-red-600 border-red-500 text-white'
+                                                    : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-neutral-700'
+                                                }`}
+                                        >
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Price Input (Conditional) */}
+                            {editFormData.type === 'comprata' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-neutral-400">Price (€)</label>
+                                    <input
+                                        type="number"
+                                        value={editFormData.price}
+                                        onChange={(e) => setEditFormData(prev => ({ ...prev, price: e.target.value }))}
+                                        placeholder="0.00"
+                                        className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white focus:outline-none focus:border-red-500"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Expansion Set */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-neutral-400">Expansion Set</label>
+                                <input
+                                    type="text"
+                                    value={editFormData.expansionSet}
+                                    onChange={(e) => setEditFormData(prev => ({ ...prev, expansionSet: e.target.value }))}
+                                    placeholder="Enter set name..."
+                                    className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white focus:outline-none focus:border-red-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-neutral-800 flex justify-between items-center bg-neutral-900">
+                            {showDeleteConfirm ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-white font-medium">Confirm delete?</span>
+                                    <button
+                                        onClick={() => deleteImage(editingImage)}
+                                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        Yes
+                                    </button>
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        className="bg-neutral-700 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        No
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="flex items-center gap-2 text-red-500 hover:text-red-400 font-medium text-sm px-2 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Picture
+                                </button>
+                            )}
+
+                            <button
+                                onClick={handleSaveDetails}
+                                className="bg-white text-black hover:bg-neutral-200 px-6 py-2 rounded-lg font-bold transition-colors"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
