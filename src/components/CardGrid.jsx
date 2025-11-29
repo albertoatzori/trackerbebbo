@@ -123,7 +123,7 @@ export default function CardGrid({ session }) {
 
                     {/* Filters and Slider Row */}
                     <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                        <div className="flex gap-1.5">
+                        <div className="flex gap-1.5 shrink-0">
                             {['all', 'owned', 'missing'].map(filter => (
                                 <button
                                     key={filter}
@@ -139,8 +139,13 @@ export default function CardGrid({ session }) {
                         </div>
 
                         {/* Column Slider */}
-                        <div className="flex items-center gap-2 px-2 shrink-0 border-l border-neutral-800 pl-4">
-                            <ZoomOut className="w-4 h-4 text-neutral-500" />
+                        <div className="flex items-center gap-2 px-2 border-l border-neutral-800 pl-4 flex-1 min-w-0">
+                            <button
+                                onClick={() => setGridColumns(Math.min(3, gridColumns + 1))}
+                                className="text-neutral-500 hover:text-white transition-colors focus:outline-none"
+                            >
+                                <ZoomOut className="w-4 h-4" />
+                            </button>
                             <input
                                 type="range"
                                 min="1"
@@ -148,9 +153,14 @@ export default function CardGrid({ session }) {
                                 step="1"
                                 value={4 - gridColumns}
                                 onChange={(e) => setGridColumns(4 - parseInt(e.target.value))}
-                                className="w-20 h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-red-600"
+                                className="w-full min-w-[2rem] h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-red-600"
                             />
-                            <ZoomIn className="w-4 h-4 text-neutral-500" />
+                            <button
+                                onClick={() => setGridColumns(Math.max(1, gridColumns - 1))}
+                                className="text-neutral-500 hover:text-white transition-colors focus:outline-none"
+                            >
+                                <ZoomIn className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
                 </div>
