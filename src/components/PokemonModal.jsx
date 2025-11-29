@@ -265,23 +265,28 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+            {/* Close Button - Moved outside */}
+            <button
+                onClick={onClose}
+                className="mb-4 p-2 bg-neutral-800 hover:bg-neutral-700 rounded-full transition-colors shadow-lg border border-neutral-700 group"
+            >
+                <X className="w-6 h-6 text-neutral-400 group-hover:text-white transition-colors" />
+            </button>
+
             <div className="relative w-full max-w-2xl bg-neutral-900 rounded-[28px] border border-neutral-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
 
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-neutral-800 bg-neutral-900">
-                    <h2 className="text-2xl font-bold text-white capitalize flex items-center gap-3">
+                <div className="flex items-center justify-center p-2 border-b border-neutral-800 bg-neutral-900">
+                    <h2 className="text-xl font-bold text-white capitalize flex items-center gap-3">
+                        <span className="text-neutral-500 text-base font-mono">#{String(pokemon.id).padStart(3, '0')}</span>
+                        {pokemon.name}
                         <img
                             src={pokemon.sprites.front_default}
                             alt={pokemon.name}
-                            className="w-12 h-12 pixelated object-contain"
+                            className="w-10 h-10 pixelated object-contain"
                         />
-                        <span className="text-neutral-500 text-lg font-mono">#{String(pokemon.id).padStart(3, '0')}</span>
-                        {pokemon.name}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-neutral-800 rounded-full transition-colors">
-                        <X className="w-6 h-6 text-neutral-400" />
-                    </button>
                 </div>
 
                 {/* Content */}
