@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Upload, Image as ImageIcon, Check, Trash2, Edit2 } from 'lucide-react'
+import { X, Upload, Image as ImageIcon, Check, Trash2, Edit2, RotateCcw } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { compressImage } from '../utils/imageCompression'
 
@@ -272,12 +272,20 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
         const url = userCard.image_urls[index]
         const metadata = userCard.card_metadata?.[url] || {}
         setEditFormData({
-            type: metadata.type || 'sbustata',
+            type: metadata.type || '',
             price: metadata.price || '',
             expansionSet: metadata.expansionSet || ''
         })
         setEditingImage(index)
         setShowDeleteConfirm(false)
+    }
+
+    const resetForm = () => {
+        setEditFormData({
+            type: '',
+            price: '',
+            expansionSet: ''
+        })
     }
 
     const handleSaveDetails = async () => {
@@ -452,7 +460,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                     )}
 
                                                     {/* Metadata Label */}
-                                                    {userCard.card_metadata?.[url] && (
+                                                    {userCard.card_metadata?.[url]?.type && (
                                                         <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-[2px] p-2 text-white text-xs z-10">
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="capitalize font-semibold truncate">
@@ -517,7 +525,16 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-neutral-900 rounded-2xl border border-neutral-800 shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="p-4 border-b border-neutral-800 flex justify-between items-center">
-                            <h3 className="text-lg font-bold text-white">Edit Card Details</h3>
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-lg font-bold text-white">Edit Card Details</h3>
+                                <button
+                                    onClick={resetForm}
+                                    className="p-1.5 text-neutral-500 hover:text-white rounded-full hover:bg-neutral-800 transition-colors"
+                                    title="Reset Info"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                </button>
+                            </div>
                             <button
                                 onClick={() => setEditingImage(null)}
                                 className="text-neutral-400 hover:text-white"
@@ -536,8 +553,8 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                             key={type}
                                             onClick={() => setEditFormData(prev => ({ ...prev, type }))}
                                             className={`p-2 rounded-lg text-sm font-medium capitalize transition-colors border ${editFormData.type === type
-                                                    ? 'bg-red-600 border-red-500 text-white'
-                                                    : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-neutral-700'
+                                                ? 'bg-red-600 border-red-500 text-white'
+                                                : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-neutral-700'
                                                 }`}
                                         >
                                             {type}

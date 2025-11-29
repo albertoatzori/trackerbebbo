@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Search, Grid, Image as ImageIcon, ZoomIn, ZoomOut, Menu } from 'lucide-react'
+import { Search, Grid, Image as ImageIcon, ZoomIn, ZoomOut, Menu, AlertTriangle } from 'lucide-react'
 import PokemonModal from './PokemonModal'
 import Sidebar from './Sidebar'
 import MissingCardsModal from './MissingCardsModal'
+import StatisticsModal from './StatisticsModal'
 import { supabase } from '../lib/supabaseClient'
 
 export default function CardGrid({ session }) {
@@ -17,6 +18,7 @@ export default function CardGrid({ session }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
     const [showMissingModal, setShowMissingModal] = useState(false)
     const [missingCards, setMissingCards] = useState([])
+    const [showStatsModal, setShowStatsModal] = useState(false)
 
     useEffect(() => {
         fetchData()
@@ -86,6 +88,11 @@ export default function CardGrid({ session }) {
         })
         setMissingCards(missing)
         setShowMissingModal(true)
+        setIsSidebarOpen(false)
+    }
+
+    const handleShowStats = () => {
+        setShowStatsModal(true)
         setIsSidebarOpen(false)
     }
 
@@ -233,9 +240,22 @@ export default function CardGrid({ session }) {
                                         </span>
                                     </div>
 
-                                    {isOwned && (
-                                        <div className="absolute top-2 right-2 z-10 w-3 h-3 bg-red-500 rounded-full ring-2 ring-white shadow-lg"></div>
-                                    )}
+                                    {(() => {
+                                        if (!isOwned) return null
+
+                                        const hasSingleImage = userCard?.image_urls?.length === 1
+                                        const singleImageUrl = userCard?.image_urls?.[0]
+                                        const hasMetadata = userCard?.card_metadata?.[singleImageUrl]?.type
+
+                                        if (hasSingleImage && !hasMetadata) {
+                                            return (
+                                                <div className="absolute top-2 right-2 z-10 bg-yellow-500 rounded-full p-1 shadow-lg animate-pulse">
+                                                    <AlertTriangle className="w-3 h-3 text-black" />
+                                                </div>
+                                            )
+                                        }
+                                        return null
+                                    })()}
 
                                     <div className="absolute inset-0 flex items-center justify-center p-4">
                                         <img
@@ -274,12 +294,19 @@ export default function CardGrid({ session }) {
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
                 onExportMissing={handleExportMissing}
+                onShowStats={handleShowStats}
             />
 
             <MissingCardsModal
                 isOpen={showMissingModal}
                 onClose={() => setShowMissingModal(false)}
                 missingCards={missingCards}
+            />
+
+            <StatisticsModal
+                isOpen={showStatsModal}
+                onClose={() => setShowStatsModal(false)}
+                userCards={userCards}
             />
         </div>
     )

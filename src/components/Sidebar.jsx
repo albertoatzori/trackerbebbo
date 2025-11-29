@@ -1,8 +1,8 @@
-import { X, Download, LogOut } from 'lucide-react'
+import { X, Download, LogOut, TrendingUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-export default function Sidebar({ isOpen, onClose, onExportMissing }) {
+export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats }) {
     const [isVisible, setIsVisible] = useState(false)
 
     useEffect(() => {
@@ -47,6 +47,16 @@ export default function Sidebar({ isOpen, onClose, onExportMissing }) {
 
                 <div className="p-4 flex-1 flex flex-col">
                     <div className="space-y-2">
+                        <button
+                            onClick={onShowStats}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
+                        >
+                            <div className="p-2 bg-neutral-800 group-hover:bg-neutral-700 rounded-lg transition-colors">
+                                <TrendingUp className="w-5 h-5" />
+                            </div>
+                            <span className="font-medium">Statistiche</span>
+                        </button>
+
                         <button
                             onClick={onExportMissing}
                             className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
