@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Search, Grid, Image as ImageIcon, ZoomIn, ZoomOut } from 'lucide-react'
+import { Search, Grid, Image as ImageIcon, ZoomIn, ZoomOut, Menu } from 'lucide-react'
 import PokemonModal from './PokemonModal'
+import Sidebar from './Sidebar'
+import MissingCardsModal from './MissingCardsModal'
 import { supabase } from '../lib/supabaseClient'
 
 export default function CardGrid({ session }) {
@@ -12,6 +14,9 @@ export default function CardGrid({ session }) {
     const [selectedPokemon, setSelectedPokemon] = useState(null)
     const [filterOwned, setFilterOwned] = useState('all')
     const [gridColumns, setGridColumns] = useState(3)
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+    const [showMissingModal, setShowMissingModal] = useState(false)
+    const [missingCards, setMissingCards] = useState([])
 
     useEffect(() => {
         fetchData()
@@ -73,6 +78,17 @@ export default function CardGrid({ session }) {
         percentage: Math.round((Object.values(userCards).filter(c => c.status === 'owned' || (!c.status && c.image_urls?.length > 0)).length / 151) * 100)
     }
 
+    const handleExportMissing = () => {
+        const missing = pokemonList.filter(p => {
+            const userCard = userCards[p.id]
+            const isOwned = userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0)
+            return !isOwned
+        })
+        setMissingCards(missing)
+        setShowMissingModal(true)
+        setIsSidebarOpen(false)
+    }
+
     return (
         <div className="min-h-screen bg-neutral-950 text-white pb-20">
             {/* Material App Bar */}
@@ -81,6 +97,12 @@ export default function CardGrid({ session }) {
                     {/* Top Row */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="p-2 -ml-2 text-neutral-400 hover:text-white rounded-full hover:bg-neutral-800 transition-colors"
+                            >
+                                <Menu className="w-6 h-6" />
+                            </button>
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
                                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                     <circle cx="12" cy="12" r="3" />
@@ -247,6 +269,18 @@ export default function CardGrid({ session }) {
                     onUpdate={fetchUserCards}
                 />
             )}
+
+            <Sidebar
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+                onExportMissing={handleExportMissing}
+            />
+
+            <MissingCardsModal
+                isOpen={showMissingModal}
+                onClose={() => setShowMissingModal(false)}
+                missingCards={missingCards}
+            />
         </div>
     )
 }
