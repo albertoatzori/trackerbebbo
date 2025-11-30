@@ -479,21 +479,27 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                             </>
                                                         )}
 
-                                                        {/* Metadata Label */}
                                                         {userCard.card_metadata?.[url]?.type && (
-                                                            <div className="absolute -bottom-0 -left-1 -right-0 bg-black/55 backdrop-blur-[2px] p-2 text-white text-xs z-10">
-                                                                <div className="flex items-center justify-between gap-2">
-                                                                    <span className="capitalize font-semibold truncate">
+                                                            <div className="absolute bottom-2 left-2 right-2 p-4 z-10 flex flex-col justify-center"
+                                                                style={{
+                                                                    backgroundImage: "url('/info-frame.png')",
+                                                                    backgroundSize: '100% 100%',
+                                                                    backgroundRepeat: 'no-repeat',
+                                                                    imageRendering: 'pixelated'
+                                                                }}
+                                                            >
+                                                                <div className="flex items-center justify-between gap-2 px-2">
+                                                                    <span className="capitalize font-bold text-black text-xs truncate font-mono tracking-tighter">
                                                                         {userCard.card_metadata[url].type}
                                                                     </span>
                                                                     {userCard.card_metadata[url].type === 'comprata' && userCard.card_metadata[url].price && (
-                                                                        <span className="text-green-400 font-mono">
+                                                                        <span className="text-black font-bold font-mono text-xs">
                                                                             €{userCard.card_metadata[url].price}
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                                 {userCard.card_metadata[url].expansionSet && (
-                                                                    <div className="text-neutral-300 truncate text-[10px] mt-0.5">
+                                                                    <div className="text-black font-bold truncate text-[10px] mt-0.5 px-2 font-mono tracking-tighter">
                                                                         {userCard.card_metadata[url].expansionSet}
                                                                     </div>
                                                                 )}
