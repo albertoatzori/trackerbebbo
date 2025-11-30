@@ -4,7 +4,7 @@ import { X, Upload, Image as ImageIcon, Check, Trash2, Edit2, RotateCcw } from '
 import { supabase } from '../lib/supabaseClient'
 import { compressImage } from '../utils/imageCompression'
 
-export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, session }) {
+export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, session, readOnly = false }) {
     const [uploading, setUploading] = useState(false)
     const [imageToDelete, setImageToDelete] = useState(null)
     const [editingImage, setEditingImage] = useState(null)
@@ -27,6 +27,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     }, [])
 
     const handleUpload = async (event) => {
+        if (readOnly) return
         try {
             setUploading(true)
             if (!event.target.files || event.target.files.length === 0) {
@@ -84,6 +85,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     }
 
     const reorderImage = async (index) => {
+        if (readOnly) return
         if (index === 0) return // Already at the top
 
         try {
@@ -117,6 +119,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     }
 
     const setCoverImage = async (index) => {
+        if (readOnly) return
         try {
             const fullUpdates = {
                 ...userCard,
@@ -140,6 +143,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     }
 
     const toggleStatus = async (newStatus) => {
+        if (readOnly) return
         try {
             const fullUpdates = {
                 ...userCard,
@@ -164,6 +168,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     }
 
     const confirmDelete = (index) => {
+        if (readOnly) return
         setImageToDelete(index)
     }
 
@@ -172,6 +177,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     }
 
     const deleteImage = async (index) => {
+        if (readOnly) return
         console.log('deleteImage called with index:', index)
         setImageToDelete(null) // Clear confirmation state
         setShowDeleteConfirm(false)
@@ -269,6 +275,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     }
 
     const handleEditClick = (index) => {
+        if (readOnly) return
         const url = userCard.image_urls[index]
         const metadata = userCard.card_metadata?.[url] || {}
         setEditFormData({
@@ -289,6 +296,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     }
 
     const handleSaveDetails = async () => {
+        if (readOnly) return
         try {
             const url = userCard.image_urls[editingImage]
             const currentMetadata = userCard.card_metadata || {}
@@ -362,51 +370,53 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto flex-1">
+                <div className="p-4 md:p-6 overflow-y-auto flex-1">
                     <div className="flex flex-col gap-8">
                         {/* Details & Upload */}
                         <div className="flex-1 space-y-6">
                             <div>
                                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                     <ImageIcon className="w-5 h-5 text-red-500" />
-                                    Your Cards
+                                    {readOnly ? 'User Cards' : 'Your Cards'}
                                 </h3>
 
-                                {/* Status Toggle */}
-                                <div className="flex bg-neutral-800 p-1 rounded-lg mb-4">
-                                    <button
-                                        onClick={() => toggleStatus('owned')}
-                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0)
-                                            ? 'bg-red-600 text-white shadow-lg'
-                                            : 'text-neutral-400 hover:text-white'
-                                            }`}
-                                    >
-                                        Owned
-                                    </button>
-                                    <button
-                                        onClick={() => toggleStatus('missing')}
-                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${userCard?.status === 'missing'
-                                            ? 'bg-neutral-700 text-white shadow-lg'
-                                            : 'text-neutral-400 hover:text-white'
-                                            }`}
-                                    >
-                                        Missing
-                                    </button>
-                                </div>
+                                {/* Status Toggle - Only show if not readOnly */}
+                                {!readOnly && (
+                                    <div className="flex bg-neutral-800 p-1 rounded-lg mb-4">
+                                        <button
+                                            onClick={() => toggleStatus('owned')}
+                                            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0)
+                                                ? 'bg-red-600 text-white shadow-lg'
+                                                : 'text-neutral-400 hover:text-white'
+                                                }`}
+                                        >
+                                            Owned
+                                        </button>
+                                        <button
+                                            onClick={() => toggleStatus('missing')}
+                                            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${userCard?.status === 'missing'
+                                                ? 'bg-neutral-700 text-white shadow-lg'
+                                                : 'text-neutral-400 hover:text-white'
+                                                }`}
+                                        >
+                                            Missing
+                                        </button>
+                                    </div>
+                                )}
 
                                 {userCard?.image_urls?.length > 0 ? (
-                                    <div className="grid grid-cols-1 gap-3">
+                                    <div className="grid grid-cols-1 gap-3 w-full">
                                         <AnimatePresence>
                                             {userCard.image_urls.map((url, idx) => (
                                                 <motion.div
-                                                    layout
+                                                    layout={!readOnly}
                                                     initial={{ opacity: 0, scale: 0.8 }}
                                                     animate={{ opacity: 1, scale: 1 }}
                                                     exit={{ opacity: 0, scale: 0.8 }}
                                                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                                     key={url}
-                                                    className="relative aspect-[2/3] cursor-pointer group"
-                                                    onClick={() => reorderImage(idx)}
+                                                    className={`relative aspect-[2/3] group w-full ${!readOnly ? 'cursor-pointer' : ''}`}
+                                                    onClick={() => !readOnly && reorderImage(idx)}
                                                 >
                                                     {/* Border Overlay - Sibling to content */}
                                                     <div className={`absolute inset-0 z-30 pointer-events-none rounded-[16px] border-2 transition-colors ${idx === 0
@@ -428,41 +438,45 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                             </div>
                                                         )}
 
-                                                        {imageToDelete === idx ? (
-                                                            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm">
-                                                                <p className="text-white text-xs font-medium">Delete?</p>
-                                                                <div className="flex gap-2">
+                                                        {!readOnly && (
+                                                            <>
+                                                                {imageToDelete === idx ? (
+                                                                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm">
+                                                                        <p className="text-white text-xs font-medium">Delete?</p>
+                                                                        <div className="flex gap-2">
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation()
+                                                                                    deleteImage(idx)
+                                                                                }}
+                                                                                className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full transition-colors"
+                                                                            >
+                                                                                <Check className="w-4 h-4" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation()
+                                                                                    cancelDelete()
+                                                                                }}
+                                                                                className="bg-neutral-600 hover:bg-neutral-500 text-white p-1.5 rounded-full transition-colors"
+                                                                            >
+                                                                                <X className="w-4 h-4" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation()
-                                                                            deleteImage(idx)
+                                                                            handleEditClick(idx)
                                                                         }}
-                                                                        className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full transition-colors"
+                                                                        className="absolute top-2 left-2 bg-black/50 hover:bg-blue-600 rounded-full p-1.5 transition-colors z-10"
+                                                                        title="Edit details"
                                                                     >
-                                                                        <Check className="w-4 h-4" />
+                                                                        <Edit2 className="w-3 h-3 text-white" />
                                                                     </button>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation()
-                                                                            cancelDelete()
-                                                                        }}
-                                                                        className="bg-neutral-600 hover:bg-neutral-500 text-white p-1.5 rounded-full transition-colors"
-                                                                    >
-                                                                        <X className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    handleEditClick(idx)
-                                                                }}
-                                                                className="absolute top-2 left-2 bg-black/50 hover:bg-blue-600 rounded-full p-1.5 transition-colors z-10"
-                                                                title="Edit details"
-                                                            >
-                                                                <Edit2 className="w-3 h-3 text-white" />
-                                                            </button>
+                                                                )}
+                                                            </>
                                                         )}
 
                                                         {/* Metadata Label */}
@@ -497,38 +511,40 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                 )}
                             </div>
 
-                            {/* Upload Button */}
-                            <div>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleUpload}
-                                    accept="image/*"
-                                    className="hidden"
-                                    disabled={uploading || (userCard?.image_urls?.length >= 4)}
-                                />
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={uploading || (userCard?.image_urls?.length >= 4)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
-                                >
-                                    {uploading ? (
-                                        <span className="animate-pulse">Uploading...</span>
-                                    ) : (
-                                        <>
-                                            <Upload className="w-4 h-4" />
-                                            Upload Card Photo ({userCard?.image_urls?.length || 0}/4)
-                                        </>
-                                    )}
-                                </button>
-                            </div>
+                            {/* Upload Button - Only show if not readOnly */}
+                            {!readOnly && (
+                                <div>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleUpload}
+                                        accept="image/*"
+                                        className="hidden"
+                                        disabled={uploading || (userCard?.image_urls?.length >= 4)}
+                                    />
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={uploading || (userCard?.image_urls?.length >= 4)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
+                                    >
+                                        {uploading ? (
+                                            <span className="animate-pulse">Uploading...</span>
+                                        ) : (
+                                            <>
+                                                <Upload className="w-4 h-4" />
+                                                Upload Card Photo ({userCard?.image_urls?.length || 0}/4)
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Edit Modal Overlay */}
-            {editingImage !== null && (
+            {/* Edit Modal Overlay - Only show if not readOnly */}
+            {!readOnly && editingImage !== null && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-neutral-900 rounded-2xl border border-neutral-800 shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="p-4 border-b border-neutral-800 flex justify-between items-center">

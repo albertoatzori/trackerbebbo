@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Search, Grid, Image as ImageIcon, ZoomIn, ZoomOut, Menu, AlertTriangle } from 'lucide-react'
+import { Search, Grid, Image as ImageIcon, ZoomIn, ZoomOut, Menu, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import PokemonModal from './PokemonModal'
+import PokemonModalReadOnly from './PokemonModalReadOnly'
 import Sidebar from './Sidebar'
 import MissingCardsModal from './MissingCardsModal'
 import StatisticsModal from './StatisticsModal'
 import { supabase } from '../lib/supabaseClient'
 
-export default function CardGrid({ session }) {
+export default function CardGrid({ session, targetUserId = null, readOnly = false, onBack, onExploreUsers }) {
     const [pokemonList, setPokemonList] = useState([])
     const [userCards, setUserCards] = useState({})
     const [loading, setLoading] = useState(true)
@@ -19,10 +21,30 @@ export default function CardGrid({ session }) {
     const [showMissingModal, setShowMissingModal] = useState(false)
     const [missingCards, setMissingCards] = useState([])
     const [showStatsModal, setShowStatsModal] = useState(false)
+    const [targetUserProfile, setTargetUserProfile] = useState(null)
 
     useEffect(() => {
         fetchData()
-    }, [])
+        if (targetUserId) {
+            fetchTargetUserProfile()
+        }
+    }, [targetUserId])
+
+    const fetchTargetUserProfile = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', targetUserId)
+                .single()
+
+            if (!error && data) {
+                setTargetUserProfile(data)
+            }
+        } catch (error) {
+            console.error('Error fetching target user profile:', error)
+        }
+    }
 
     const fetchData = async () => {
         try {
@@ -47,10 +69,11 @@ export default function CardGrid({ session }) {
     }
 
     const fetchUserCards = async () => {
+        const userIdToFetch = targetUserId || session.user.id
         const { data, error } = await supabase
             .from('cards')
             .select('*')
-            .eq('user_id', session.user.id)
+            .eq('user_id', userIdToFetch)
 
         if (error) {
             console.error('Error fetching cards:', error)
@@ -104,12 +127,22 @@ export default function CardGrid({ session }) {
                     {/* Top Row */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setIsSidebarOpen(true)}
-                                className="p-2 -ml-2 text-neutral-400 hover:text-white rounded-full hover:bg-neutral-800 transition-colors"
-                            >
-                                <Menu className="w-6 h-6" />
-                            </button>
+                            {readOnly && onBack ? (
+                                <button
+                                    onClick={onBack}
+                                    className="p-2 -ml-2 text-neutral-400 hover:text-white rounded-full hover:bg-neutral-800 transition-colors"
+                                >
+                                    <ArrowLeft className="w-6 h-6" />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setIsSidebarOpen(true)}
+                                    className="p-2 -ml-2 text-neutral-400 hover:text-white rounded-full hover:bg-neutral-800 transition-colors"
+                                >
+                                    <Menu className="w-6 h-6" />
+                                </button>
+                            )}
+
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
                                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                     <circle cx="12" cy="12" r="3" />
@@ -117,7 +150,12 @@ export default function CardGrid({ session }) {
                                 </svg>
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-white">Kanto Tracker</h1>
+                                <h1 className="text-xl font-bold text-white">
+                                    {readOnly && targetUserProfile
+                                        ? `Collezione di ${targetUserProfile.display_name || targetUserProfile.email?.split('@')[0]}`
+                                        : 'Kanto Tracker'
+                                    }
+                                </h1>
                                 <p className="text-xs text-neutral-400">Pokémon Collection</p>
                             </div>
                         </div>
@@ -279,22 +317,33 @@ export default function CardGrid({ session }) {
                 )}
             </div>
 
-            {/* Modal */}
-            {selectedPokemon && (
-                <PokemonModal
-                    pokemon={selectedPokemon}
-                    userCard={userCards[selectedPokemon.id]}
-                    session={session}
-                    onClose={() => setSelectedPokemon(null)}
-                    onUpdate={fetchUserCards}
-                />
-            )}
+            {/* Modals */}
+            <AnimatePresence>
+                {selectedPokemon && (
+                    readOnly ? (
+                        <PokemonModalReadOnly
+                            pokemon={selectedPokemon}
+                            onClose={() => setSelectedPokemon(null)}
+                            userCard={userCards[selectedPokemon.id]}
+                        />
+                    ) : (
+                        <PokemonModal
+                            pokemon={selectedPokemon}
+                            onClose={() => setSelectedPokemon(null)}
+                            userCard={userCards[selectedPokemon.id]}
+                            onUpdate={fetchUserCards}
+                            session={session}
+                        />
+                    )
+                )}
+            </AnimatePresence>
 
             <Sidebar
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
                 onExportMissing={handleExportMissing}
                 onShowStats={handleShowStats}
+                onExploreUsers={onExploreUsers}
             />
 
             <MissingCardsModal

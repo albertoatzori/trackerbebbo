@@ -1,9 +1,10 @@
-import { X, Download, LogOut, TrendingUp } from 'lucide-react'
+import { X, Download, LogOut, TrendingUp, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats }) {
+export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats, onExploreUsers }) {
     const [isVisible, setIsVisible] = useState(false)
+    const [currentUserEmail, setCurrentUserEmail] = useState(null)
 
     useEffect(() => {
         if (isOpen) {
@@ -13,6 +14,14 @@ export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats 
             return () => clearTimeout(timer)
         }
     }, [isOpen])
+
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                setCurrentUserEmail(user.email)
+            }
+        })
+    }, [])
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
@@ -66,6 +75,19 @@ export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats 
                             </div>
                             <span className="font-medium">Lista Mancanti</span>
                         </button>
+
+                        {/* Explore Users Button - Only for specific email */}
+                        {currentUserEmail === 'atzoalbo.94@gmail.com' && (
+                            <button
+                                onClick={onExploreUsers}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
+                            >
+                                <div className="p-2 bg-neutral-800 group-hover:bg-neutral-700 rounded-lg transition-colors">
+                                    <Users className="w-5 h-5" />
+                                </div>
+                                <span className="font-medium">Esplora Utenti</span>
+                            </button>
+                        )}
                     </div>
 
                     <div className="mt-auto pt-4 border-t border-neutral-800">
