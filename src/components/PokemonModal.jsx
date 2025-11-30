@@ -405,80 +405,87 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                     exit={{ opacity: 0, scale: 0.8 }}
                                                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                                     key={url}
-                                                    className={`relative aspect-[2/3] rounded-xl overflow-hidden border-2 cursor-pointer group transition-colors ${idx === 0
-                                                        ? 'border-red-500 shadow-lg shadow-red-500/20'
-                                                        : 'border-transparent hover:border-neutral-600'
-                                                        }`}
+                                                    className="relative aspect-[2/3] cursor-pointer group"
                                                     onClick={() => reorderImage(idx)}
                                                 >
-                                                    <img
-                                                        src={fixSupabaseUrl(url)}
-                                                        alt="Card"
-                                                        className="w-full h-full object-cover"
+                                                    {/* Border Overlay - Sibling to content */}
+                                                    <div className={`absolute inset-0 z-30 pointer-events-none rounded-[16px] border-2 transition-colors ${idx === 0
+                                                        ? 'border-red-500 shadow-lg shadow-red-500/20'
+                                                        : 'border-transparent group-hover:border-neutral-600'
+                                                        }`}
                                                     />
-                                                    {idx === 0 && (
-                                                        <div className="absolute top-2 right-2 bg-red-500 rounded-full p-1 shadow-md z-10">
-                                                            <Check className="w-3 h-3 text-white" />
-                                                        </div>
-                                                    )}
 
-                                                    {imageToDelete === idx ? (
-                                                        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm rounded-[10px]">
-                                                            <p className="text-white text-xs font-medium">Delete?</p>
-                                                            <div className="flex gap-2">
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation()
-                                                                        deleteImage(idx)
-                                                                    }}
-                                                                    className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full transition-colors"
-                                                                >
-                                                                    <Check className="w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation()
-                                                                        cancelDelete()
-                                                                    }}
-                                                                    className="bg-neutral-600 hover:bg-neutral-500 text-white p-1.5 rounded-full transition-colors"
-                                                                >
-                                                                    <X className="w-4 h-4" />
-                                                                </button>
+                                                    {/* Content Container - Handles clipping */}
+                                                    <div className="relative w-full h-full rounded-[18px] overflow-hidden bg-neutral-900">
+                                                        <img
+                                                            src={fixSupabaseUrl(url)}
+                                                            alt="Card"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                        {idx === 0 && (
+                                                            <div className="absolute top-2 right-2 bg-red-500 rounded-full p-1 shadow-md z-10">
+                                                                <Check className="w-3 h-3 text-white" />
                                                             </div>
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                handleEditClick(idx)
-                                                            }}
-                                                            className="absolute top-2 left-2 bg-black/50 hover:bg-blue-600 rounded-full p-1.5 transition-colors z-10"
-                                                            title="Edit details"
-                                                        >
-                                                            <Edit2 className="w-3 h-3 text-white" />
-                                                        </button>
-                                                    )}
+                                                        )}
 
-                                                    {/* Metadata Label */}
-                                                    {userCard.card_metadata?.[url]?.type && (
-                                                        <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-[2px] p-2 text-white text-xs z-10">
-                                                            <div className="flex items-center justify-between gap-2">
-                                                                <span className="capitalize font-semibold truncate">
-                                                                    {userCard.card_metadata[url].type}
-                                                                </span>
-                                                                {userCard.card_metadata[url].type === 'comprata' && userCard.card_metadata[url].price && (
-                                                                    <span className="text-green-400 font-mono">
-                                                                        €{userCard.card_metadata[url].price}
+                                                        {imageToDelete === idx ? (
+                                                            <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm">
+                                                                <p className="text-white text-xs font-medium">Delete?</p>
+                                                                <div className="flex gap-2">
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation()
+                                                                            deleteImage(idx)
+                                                                        }}
+                                                                        className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full transition-colors"
+                                                                    >
+                                                                        <Check className="w-4 h-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation()
+                                                                            cancelDelete()
+                                                                        }}
+                                                                        className="bg-neutral-600 hover:bg-neutral-500 text-white p-1.5 rounded-full transition-colors"
+                                                                    >
+                                                                        <X className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    handleEditClick(idx)
+                                                                }}
+                                                                className="absolute top-2 left-2 bg-black/50 hover:bg-blue-600 rounded-full p-1.5 transition-colors z-10"
+                                                                title="Edit details"
+                                                            >
+                                                                <Edit2 className="w-3 h-3 text-white" />
+                                                            </button>
+                                                        )}
+
+                                                        {/* Metadata Label */}
+                                                        {userCard.card_metadata?.[url]?.type && (
+                                                            <div className="absolute -bottom-0 -left-1 -right-0 bg-black/55 backdrop-blur-[2px] p-2 text-white text-xs z-10">
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <span className="capitalize font-semibold truncate">
+                                                                        {userCard.card_metadata[url].type}
                                                                     </span>
+                                                                    {userCard.card_metadata[url].type === 'comprata' && userCard.card_metadata[url].price && (
+                                                                        <span className="text-green-400 font-mono">
+                                                                            €{userCard.card_metadata[url].price}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {userCard.card_metadata[url].expansionSet && (
+                                                                    <div className="text-neutral-300 truncate text-[10px] mt-0.5">
+                                                                        {userCard.card_metadata[url].expansionSet}
+                                                                    </div>
                                                                 )}
                                                             </div>
-                                                            {userCard.card_metadata[url].expansionSet && (
-                                                                <div className="text-neutral-300 truncate text-[10px] mt-0.5">
-                                                                    {userCard.card_metadata[url].expansionSet}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
+                                                        )}
+                                                    </div>
                                                 </motion.div>
                                             ))}
                                         </AnimatePresence>
