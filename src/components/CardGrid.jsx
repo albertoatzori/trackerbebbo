@@ -6,6 +6,7 @@ import PokemonModalReadOnly from './PokemonModalReadOnly'
 import Sidebar from './Sidebar'
 import MissingCardsModal from './MissingCardsModal'
 import StatisticsModal from './StatisticsModal'
+import GamblingModal from './GamblingModal'
 import { supabase } from '../lib/supabaseClient'
 
 export default function CardGrid({ session, targetUserId = null, readOnly = false, onBack, onExploreUsers }) {
@@ -21,6 +22,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
     const [showMissingModal, setShowMissingModal] = useState(false)
     const [missingCards, setMissingCards] = useState([])
     const [showStatsModal, setShowStatsModal] = useState(false)
+    const [showGamblingModal, setShowGamblingModal] = useState(false)
     const [targetUserProfile, setTargetUserProfile] = useState(null)
 
     useEffect(() => {
@@ -116,6 +118,17 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
 
     const handleShowStats = () => {
         setShowStatsModal(true)
+        setIsSidebarOpen(false)
+    }
+
+    const handleGambling = () => {
+        const missing = pokemonList.filter(p => {
+            const userCard = userCards[p.id]
+            const isOwned = userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0)
+            return !isOwned
+        })
+        setMissingCards(missing)
+        setShowGamblingModal(true)
         setIsSidebarOpen(false)
     }
 
@@ -344,6 +357,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                 onExportMissing={handleExportMissing}
                 onShowStats={handleShowStats}
                 onExploreUsers={onExploreUsers}
+                onGambling={handleGambling}
             />
 
             <MissingCardsModal
@@ -356,6 +370,12 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                 isOpen={showStatsModal}
                 onClose={() => setShowStatsModal(false)}
                 userCards={userCards}
+            />
+
+            <GamblingModal
+                isOpen={showGamblingModal}
+                onClose={() => setShowGamblingModal(false)}
+                missingCards={missingCards}
             />
         </div>
     )
