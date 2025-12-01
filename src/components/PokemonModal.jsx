@@ -415,7 +415,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                     exit={{ opacity: 0, scale: 0.8 }}
                                                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                                     key={url}
-                                                    className={`relative aspect-[2/3] group w-full ${!readOnly ? 'cursor-pointer' : ''}`}
+                                                    className={`relative aspect-[63/88] group w-full ${!readOnly ? 'cursor-pointer' : ''}`}
                                                     onClick={() => !readOnly && reorderImage(idx)}
                                                 >
                                                     {/* Border Overlay - Sibling to content */}

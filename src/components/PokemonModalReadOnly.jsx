@@ -62,7 +62,7 @@ export default function PokemonModalReadOnly({ pokemon, onClose, userCard }) {
                                         {userCard.image_urls.map((url, idx) => (
                                             <div
                                                 key={url}
-                                                className="relative aspect-[2/3] w-full rounded-[18px] overflow-hidden bg-neutral-900 border border-neutral-800"
+                                                className="relative aspect-[63/88] w-full rounded-[18px] overflow-hidden bg-neutral-900 border border-neutral-800"
                                             >
                                                 <img
                                                     src={fixSupabaseUrl(url)}
