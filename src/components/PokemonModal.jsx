@@ -351,12 +351,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     return (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
             {/* Close Button - Moved outside */}
-            <button
-                onClick={onClose}
-                className="mb-4 p-2 bg-neutral-800 hover:bg-neutral-700 rounded-full transition-colors shadow-lg border border-neutral-700 group"
-            >
-                <X className="w-6 h-6 text-neutral-400 group-hover:text-white transition-colors" />
-            </button>
+
 
             <div className="relative w-full max-w-2xl bg-neutral-900 rounded-[28px] border border-neutral-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
 
@@ -557,6 +552,14 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                     </div>
                 </div>
             </div>
+
+            {/* Close Button - Moved to bottom */}
+            <button
+                onClick={onClose}
+                className="mt-4 p-2 bg-neutral-800 hover:bg-neutral-700 rounded-full transition-colors shadow-lg border border-neutral-700 group"
+            >
+                <X className="w-6 h-6 text-neutral-400 group-hover:text-white transition-colors" />
+            </button>
 
             {/* Edit Modal Overlay - Only show if not readOnly */}
             {!readOnly && editingImage !== null && (
