@@ -67,7 +67,7 @@ export default function PokemonModalReadOnly({ pokemon, onClose, userCard }) {
                                                 <img
                                                     src={fixSupabaseUrl(url)}
                                                     alt="Card"
-                                                    className="w-full h-full object-cover"
+                                                    className="w-[100%] h-full object-contain mx-auto block"
                                                 />
 
                                                 {userCard.card_metadata?.[url]?.type && (

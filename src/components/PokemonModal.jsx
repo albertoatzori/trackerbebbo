@@ -430,7 +430,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                         <img
                                                             src={fixSupabaseUrl(url)}
                                                             alt="Card"
-                                                            className="w-full h-full object-cover"
+                                                            className="w-[100%] h-full object-contain mx-auto block"
                                                         />
                                                         {idx === 0 && (
                                                             <div className="absolute top-2 right-2 bg-red-500 rounded-full p-1 shadow-md z-10">
