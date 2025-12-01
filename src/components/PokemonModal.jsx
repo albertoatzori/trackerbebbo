@@ -11,7 +11,8 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     const [editFormData, setEditFormData] = useState({
         type: 'sbustata',
         price: '',
-        expansionSet: ''
+        expansionSet: '',
+        personName: ''
     })
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const fileInputRef = useRef(null)
@@ -281,7 +282,8 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
         setEditFormData({
             type: metadata.type || '',
             price: metadata.price || '',
-            expansionSet: metadata.expansionSet || ''
+            expansionSet: metadata.expansionSet || '',
+            personName: metadata.personName || ''
         })
         setEditingImage(index)
         setShowDeleteConfirm(false)
@@ -291,7 +293,8 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
         setEditFormData({
             type: '',
             price: '',
-            expansionSet: ''
+            expansionSet: '',
+            personName: ''
         })
     }
 
@@ -306,7 +309,8 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                 [url]: {
                     type: editFormData.type,
                     price: editFormData.price,
-                    expansionSet: editFormData.expansionSet
+                    expansionSet: editFormData.expansionSet,
+                    personName: editFormData.personName
                 }
             }
 
@@ -497,6 +501,11 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                                             €{userCard.card_metadata[url].price}
                                                                         </span>
                                                                     )}
+                                                                    {(userCard.card_metadata[url].type === 'scambiata' || userCard.card_metadata[url].type === 'regalata') && userCard.card_metadata[url].personName && (
+                                                                        <span className="text-black font-bold font-mono text-xs">
+                                                                            {userCard.card_metadata[url].personName}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 {userCard.card_metadata[url].expansionSet && (
                                                                     <div className="text-black font-bold truncate text-[10px] mt-0.5 px-2 font-mono tracking-tighter">
@@ -601,6 +610,20 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                         value={editFormData.price}
                                         onChange={(e) => setEditFormData(prev => ({ ...prev, price: e.target.value }))}
                                         placeholder="0.00"
+                                        className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white focus:outline-none focus:border-red-500"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Person Name Input (Conditional) */}
+                            {(editFormData.type === 'scambiata' || editFormData.type === 'regalata') && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-neutral-400">Person Name</label>
+                                    <input
+                                        type="text"
+                                        value={editFormData.personName}
+                                        onChange={(e) => setEditFormData(prev => ({ ...prev, personName: e.target.value }))}
+                                        placeholder="Enter name..."
                                         className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white focus:outline-none focus:border-red-500"
                                     />
                                 </div>
