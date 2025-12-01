@@ -129,26 +129,7 @@ export default function Auth() {
                             )}
                         </button>
                     </form>
-
-                    {/* Helper Text */}
-                    <p className="text-center text-sm text-neutral-500 mt-6">
-                        {isSignUp
-                            ? 'Already have an account?'
-                            : "Don't have an account?"}
-                        {' '}
-                        <button
-                            onClick={() => setIsSignUp(!isSignUp)}
-                            className="text-red-500 hover:text-red-400 font-medium"
-                        >
-                            {isSignUp ? 'Sign In' : 'Sign Up'}
-                        </button>
-                    </p>
                 </div>
-
-                {/* Footer */}
-                <p className="text-center text-xs text-neutral-600 mt-6">
-                    Secure authentication powered by Supabase
-                </p>
             </div>
         </div>
     )
