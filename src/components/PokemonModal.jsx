@@ -608,7 +608,11 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                 <h3 className="text-lg font-bold text-white">Edit Card Details</h3>
                                 <button
                                     onClick={resetForm}
-                                    className="p-1.5 text-neutral-500 hover:text-white rounded-full hover:bg-neutral-800 transition-colors"
+                                    disabled={!editFormData.type && !editFormData.price && !editFormData.expansionSet && !editFormData.personName && !editFormData.cardNumber}
+                                    className={`p-1.5 rounded-full transition-colors ${(!editFormData.type && !editFormData.price && !editFormData.expansionSet && !editFormData.personName && !editFormData.cardNumber)
+                                        ? 'text-neutral-700 cursor-not-allowed'
+                                        : 'text-neutral-500 hover:text-white hover:bg-neutral-800'
+                                        }`}
                                     title="Reset Info"
                                 >
                                     <RotateCcw className="w-4 h-4" />
@@ -630,7 +634,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                     {['sbustata', 'comprata', 'scambiata', 'regalata'].map((type) => (
                                         <button
                                             key={type}
-                                            onClick={() => setEditFormData(prev => ({ ...prev, type }))}
+                                            onClick={() => setEditFormData(prev => ({ ...prev, type: prev.type === type ? '' : type }))}
                                             className={`p-2 rounded-lg text-sm font-medium capitalize transition-colors border ${editFormData.type === type
                                                 ? 'bg-red-600 border-red-500 text-white'
                                                 : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:bg-neutral-700'
