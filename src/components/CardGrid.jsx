@@ -376,6 +376,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                 isOpen={showGamblingModal}
                 onClose={() => setShowGamblingModal(false)}
                 missingCards={missingCards}
+                session={session}
             />
         </div>
     )

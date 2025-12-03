@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Dices, RefreshCw, Sparkles } from 'lucide-react'
 
-export default function GamblingModal({ isOpen, onClose, missingCards }) {
+export default function GamblingModal({ isOpen, onClose, missingCards, session }) {
     const [gameState, setGameState] = useState('idle') // idle, animating, result
     const [currentPokemon, setCurrentPokemon] = useState(null)
     const [targetPokemon, setTargetPokemon] = useState(null)
     const [foundCard, setFoundCard] = useState(null)
     const [searchingCard, setSearchingCard] = useState(false)
     const [cardError, setCardError] = useState(null)
+    const [warningMessage, setWarningMessage] = useState(null)
     const [hasPlayedToday, setHasPlayedToday] = useState(false)
     const animationRef = useRef(null)
     const isBackNavigation = useRef(false)
@@ -52,6 +53,7 @@ export default function GamblingModal({ isOpen, onClose, missingCards }) {
             setFoundCard(null)
             setSearchingCard(false)
             setCardError(null)
+            setWarningMessage(null)
 
             // Check if user has played today
             const lastPlayed = localStorage.getItem('gambling_last_played')
@@ -79,20 +81,23 @@ export default function GamblingModal({ isOpen, onClose, missingCards }) {
     const fetchCard = async (pokemonData) => {
         setSearchingCard(true)
         setCardError(null)
+        setWarningMessage(null)
 
         try {
-            // TCGDex Rarities Filter
-            const raritiesDB = [
-                "None",
-                "Ultra rare",
-                "Illustration rare",
-                "Special illustration rare",
-            ]
+            let searchName = pokemonData.name;
+            // Fix for Mr. Mime
+            if (searchName === 'Mr-Mime') {
+                searchName = 'Mr. Mime';
+            }
+            // Fix for Farfetch'd
+            if (searchName === 'Farfetchd') {
+                searchName = "Farfetch'd";
+            }
 
-            console.log(`🔍 TCGDex - Searching for: ${pokemonData.name}`)
+            console.log(`🔍 TCGDex - Searching for: ${searchName}`)
 
             // 1. Search for cards by name
-            const searchResponse = await fetch(`https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(pokemonData.name)}`)
+            const searchResponse = await fetch(`https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(searchName)}`)
 
             if (!searchResponse.ok) {
                 throw new Error(`TCGDex Search Error: ${searchResponse.status}`)
@@ -101,11 +106,35 @@ export default function GamblingModal({ isOpen, onClose, missingCards }) {
             const searchResult = await searchResponse.json()
 
             // TCGDex returns an array of cards directly or an object with data? 
-            // Documentation says it returns an array of cards for this endpoint usually, 
-            // but let's handle if it's wrapped.
-            const cards = Array.isArray(searchResult) ? searchResult : (searchResult.cards || [])
+            let cards = Array.isArray(searchResult) ? searchResult : (searchResult.cards || [])
 
-            console.log(`🔍 TCGDex - Found ${cards.length} potential cards`)
+            // Filter out unwanted cards
+            cards = cards.filter(card => {
+                const nameLower = card.name.toLowerCase();
+                const searchLower = searchName.toLowerCase();
+
+                // 0. Strict Name Check (Word Boundary)
+                const escapedSearch = searchLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const wordRegex = new RegExp(`\\b${escapedSearch}\\b`, 'i');
+
+                if (!wordRegex.test(nameLower)) {
+                    return false;
+                }
+
+                // Filter specific names
+                if (nameLower.includes('mega') || nameLower.includes('galarian') || nameLower.includes('alolan') || nameLower.includes('hisuian') || nameLower.includes('paldean')) {
+                    return false;
+                }
+
+                // Filter Porygon evolutions if searching for Porygon
+                if (searchName.toLowerCase() === 'porygon') {
+                    if (nameLower.includes('porygon-z') || nameLower.includes('porygon2')) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
 
             if (cards.length === 0) {
                 console.warn("🔍 TCGDex - No cards found.")
@@ -113,65 +142,128 @@ export default function GamblingModal({ isOpen, onClose, missingCards }) {
                 return
             }
 
-            // 2. Shuffle cards to pick a random winner efficiently
-            // We shuffle FIRST, then check details one by one until we find a match.
-            // This avoids fetching details for ALL cards (which would be slow).
-            const shuffledCards = cards.sort(() => 0.5 - Math.random())
+            // 2. Fetch details for ALL filtered cards in parallel
+            // We limit to 200 to be safe, but we want "all" cards.
+            const candidates = cards.slice(0, 200);
 
-            let validCard = null
-
-            // 3. Iterate and check details
-            for (const cardSummary of shuffledCards) {
-                // Skip if it doesn't have an ID (shouldn't happen)
-                if (!cardSummary.id) continue
-
+            const detailPromises = candidates.map(async (cardSummary) => {
+                if (!cardSummary.id) return null;
                 try {
-                    // Fetch details
-                    const detailResponse = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardSummary.id}`)
-                    if (!detailResponse.ok) continue
-
-                    const cardDetail = await detailResponse.json()
-
-                    // Check Rarity
-                    // TCGDex rarity is an object or string? Usually string in 'rarity' field
-                    // Let's log it to be sure during debug
-                    // console.log(`🔍 Checking ${cardDetail.name} (${cardDetail.id}) - Rarity: ${cardDetail.rarity}`)
-
-                    if (raritiesDB.includes(cardDetail.rarity)) {
-                        // Special check for "None" rarity: must be from a "Promo" set
-                        if (cardDetail.rarity === "None") {
-                            const setName = cardDetail.set?.name?.toLowerCase() || ""
-                            if (!setName.includes("promo")) {
-                                continue // Skip this card
-                            }
-                        }
-
-                        // Found a match!
-                        console.log("🔍 TCGDex - MATCH FOUND!", cardDetail)
-
-                        // Construct image URL: base + /high.webp
-                        // TCGDex usually provides 'image' field with base url
-                        const imageUrl = cardDetail.image ? `${cardDetail.image}/high.webp` : null
-
-                        if (imageUrl) {
-                            validCard = {
-                                ...cardDetail,
-                                images: { large: imageUrl }, // Map to our expected format
-                                rarity: cardDetail.rarity
-                            }
-                            break // Stop searching
-                        }
-                    }
+                    const res = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardSummary.id}`);
+                    if (!res.ok) return null;
+                    return await res.json();
                 } catch (err) {
-                    console.warn(`Skipping card ${cardSummary.id} due to error`, err)
+                    console.warn(`Error fetching details for ${cardSummary.id}`, err);
+                    return null;
+                }
+            });
+
+            const detailsResults = await Promise.all(detailPromises);
+            const validDetails = detailsResults.filter(d => d !== null);
+
+            // 3. Classify cards by Pools
+            let poolIllustration = [] // "Illustration rare"
+            let poolSpecialIllustration = [] // "Special illustration rare"
+            let poolNone = [] // "None"
+            let poolUltraRare = [] // "Ultra rare"
+            let poolOthers = [] // Everything else
+
+            const excludedRarities = ["Crown", "Four Diamond", "One Diamond", "One Shiny", "One Star", "Three Diamond", "Three Star", "Two Diamond", "Two Shiny", "Two Star"]
+
+            for (const cardDetail of validDetails) {
+                // Check if it's a Trainer card
+                if (cardDetail.category === 'Trainer' || cardDetail.supertype === 'Trainer') {
+                    continue;
+                }
+
+                // Check Set Name for Promos-A, Promos-B, etc.
+                const setName = cardDetail.set?.name || "";
+                if (/Promos-[A-Z]/.test(setName)) {
+                    continue;
+                }
+
+                // Construct image URL
+                const imageUrl = cardDetail.image ? `${cardDetail.image}/high.webp` : null
+                if (!imageUrl) continue
+
+                const validCard = {
+                    ...cardDetail,
+                    images: { large: imageUrl },
+                    rarity: cardDetail.rarity
+                }
+
+                const rarity = cardDetail.rarity
+
+                if (excludedRarities.includes(rarity)) continue
+
+                if (rarity === "Illustration rare") {
+                    poolIllustration.push(validCard)
+                } else if (rarity === "Special illustration rare") {
+                    poolSpecialIllustration.push(validCard)
+                } else if (rarity === "None") {
+                    poolNone.push(validCard)
+                } else if (rarity === "Ultra rare") {
+                    poolUltraRare.push(validCard)
+                } else {
+                    poolOthers.push(validCard)
                 }
             }
 
-            if (validCard) {
-                setFoundCard(validCard)
+            let bestCard = null
+            let bestTier = 0
+
+            // 4. Selection Logic
+
+            // Priority 1: Illustration rare OR Special illustration rare
+            if (poolIllustration.length > 0 || poolSpecialIllustration.length > 0) {
+                bestTier = 3
+
+                if (poolIllustration.length > 0 && poolSpecialIllustration.length > 0) {
+                    // 50% / 50% probability
+                    if (Math.random() < 0.5) {
+                        bestCard = poolIllustration[Math.floor(Math.random() * poolIllustration.length)]
+                    } else {
+                        bestCard = poolSpecialIllustration[Math.floor(Math.random() * poolSpecialIllustration.length)]
+                    }
+                } else if (poolIllustration.length > 0) {
+                    bestCard = poolIllustration[Math.floor(Math.random() * poolIllustration.length)]
+                } else {
+                    bestCard = poolSpecialIllustration[Math.floor(Math.random() * poolSpecialIllustration.length)]
+                }
+            }
+            // Priority 2: None OR Ultra rare
+            else if (poolNone.length > 0 || poolUltraRare.length > 0) {
+                bestTier = 2
+
+                if (poolNone.length > 0 && poolUltraRare.length > 0) {
+                    // 25% None / 75% Ultra rare
+                    if (Math.random() < 0.25) {
+                        bestCard = poolNone[Math.floor(Math.random() * poolNone.length)]
+                    } else {
+                        bestCard = poolUltraRare[Math.floor(Math.random() * poolUltraRare.length)]
+                    }
+                } else if (poolNone.length > 0) {
+                    bestCard = poolNone[Math.floor(Math.random() * poolNone.length)]
+                } else {
+                    bestCard = poolUltraRare[Math.floor(Math.random() * poolUltraRare.length)]
+                }
+            }
+            // Priority 3: Others
+            else if (poolOthers.length > 0) {
+                bestTier = 1
+                bestCard = poolOthers[Math.floor(Math.random() * poolOthers.length)]
+            }
+
+            if (bestCard) {
+                setFoundCard(bestCard)
+
+                // Set warning message based on tier found
+                if (bestTier < 3) {
+                    setWarningMessage("Non esistono Illustration rare o Special illustration rare, ti propongo questa carta che probabilmente farà schifo:")
+                }
             } else {
-                console.warn("🔍 TCGDex - No cards matched the rarity filter.")
-                setCardError("Non esiste una full art!")
+                console.warn("🔍 TCGDex - No valid cards found after checks.")
+                setCardError("Non ho trovato nessuna carta valida!")
             }
 
         } catch (error) {
@@ -186,7 +278,8 @@ export default function GamblingModal({ isOpen, onClose, missingCards }) {
         if (gameState === 'animating') {
             let speed = 50
             let duration = 0
-            const maxDuration = 3000 // 3 seconds total animation
+            const isVip = session?.user?.email === 'atzoalbo.94@gmail.com'
+            const maxDuration = isVip ? 1000 : 3000 // 1 second for VIP, 3 seconds for others
 
             const animate = () => {
                 // Pick random pokemon from missing list for visual effect
@@ -224,7 +317,9 @@ export default function GamblingModal({ isOpen, onClose, missingCards }) {
 
     const handleStart = () => {
         if (missingCards.length === 0) return
-        if (hasPlayedToday) return
+
+        const isVip = session?.user?.email === 'atzoalbo.94@gmail.com'
+        if (hasPlayedToday && !isVip) return
 
         // Save today's date to localStorage
         const today = new Date().toISOString().split('T')[0]
@@ -264,16 +359,17 @@ export default function GamblingModal({ isOpen, onClose, missingCards }) {
                             </div>
                         )}
                         <h2 className={`font-bold text-white ${gameState === 'result' ? 'text-lg' : 'text-2xl'}`}>
-                            {gameState === 'idle' && !hasPlayedToday && "Pronto a sborsare?"}
-                            {gameState === 'idle' && hasPlayedToday && "Torna domani!"}
+                            {gameState === 'idle' && (!hasPlayedToday || session?.user?.email === 'atzoalbo.94@gmail.com') && "Pronto a sborsare?"}
+                            {gameState === 'idle' && hasPlayedToday && session?.user?.email !== 'atzoalbo.94@gmail.com' && "Torna domani!"}
                             {gameState === 'animating' && "Estraendo..."}
                             {gameState === 'winner_reveal' && "Hai trovato!"}
-                            {gameState === 'result' && foundCard && "Oggi compra questa carta e torna domani!"}
+                            {gameState === 'result' && foundCard && !warningMessage && "Oggi compra questa carta e torna domani!"}
+                            {gameState === 'result' && warningMessage && warningMessage}
                             {gameState === 'result' && cardError && "Oggi si risparmia!"}
                         </h2>
                         <p className="text-neutral-400 text-sm">
-                            {gameState === 'idle' && !hasPlayedToday && `Hai ${missingCards.length} Pokémon mancanti. Vediamo chi esce!`}
-                            {gameState === 'idle' && hasPlayedToday && "Per oggi hai già usato la funzione Gambling, torna domani."}
+                            {gameState === 'idle' && (!hasPlayedToday || session?.user?.email === 'atzoalbo.94@gmail.com') && `Hai ${missingCards.length} Pokémon mancanti. Vediamo chi esce!`}
+                            {gameState === 'idle' && hasPlayedToday && session?.user?.email !== 'atzoalbo.94@gmail.com' && "Per oggi hai già usato la funzione Gambling, torna domani."}
                             {gameState === 'animating' && "Chi sarà?"}
                             {gameState === 'winner_reveal' && "Aggiungilo alla tua lista desideri!"}
                         </p>
@@ -390,13 +486,23 @@ export default function GamblingModal({ isOpen, onClose, missingCards }) {
 
                     {/* Actions */}
                     <div className="w-full pt-2 flex justify-center">
-                        {gameState === 'idle' && !hasPlayedToday && (
+                        {gameState === 'idle' && (!hasPlayedToday || session?.user?.email === 'atzoalbo.94@gmail.com') && (
                             <button
                                 onClick={handleStart}
                                 disabled={missingCards.length === 0}
                                 className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg transform transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Vai!
+                            </button>
+                        )}
+
+                        {gameState === 'result' && session?.user?.email === 'atzoalbo.94@gmail.com' && (
+                            <button
+                                onClick={handleStart}
+                                className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-xl shadow-lg transform transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <RefreshCw className="w-5 h-5" />
+                                Riprova
                             </button>
                         )}
                     </div>
