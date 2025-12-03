@@ -1,0 +1,52 @@
+[
+  {
+    "date": "2025-12-03",
+    "title": "Miglioramenti UI e Nuove Funzionalità",
+    "changes": [
+      "Aggiunto campo 'Nome Persona' nel dettaglio della carta per carte scambiate/regalate",
+      "Aggiornato aspect ratio delle immagini a 63:88 per una visualizzazione migliore",
+      "Migliorata la visualizzazione delle immagini nei modali (object-contain)",
+      "Aggiunta cornice pixel art alle etichette delle info carta"
+    ]
+  },
+  {
+    "date": "2025-12-02",
+    "title": "Aggiornamento Gambling e Esplorazione",
+    "changes": [
+      "Migrato sistema di gambling su TCGDex",
+      "Migliorata UI del gambling e aggiunto limite giornaliero",
+      "Ottimizzate API del gambling con filtri server-side",
+      "Implementata funzionalità 'Esplora Utenti' con modale di sola lettura"
+    ]
+  },
+  {
+    "date": "2025-12-01",
+    "title": "Statistiche e UI",
+    "changes": [
+      "Aggiunta dashboard delle statistiche",
+      "Migliorati indicatori delle carte",
+      "Aggiunti dettagli acquisizione carte e modale di modifica",
+      "Aggiornato layout header del modale Pokemon",
+      "Implementato layout a colonna singola per le foto con riordinamento animato",
+      "Aggiunta sidebar con export carte mancanti e logout"
+    ]
+  },
+  {
+    "date": "2025-11-27",
+    "title": "Ottimizzazioni e PWA",
+    "changes": [
+      "Implementata compressione immagini",
+      "Aggiunto supporto PWA con icona personalizzata",
+      "Migliorato slider densità colonne e UI mobile",
+      "Ottimizzati pulsanti filtro per mobile"
+    ]
+  },
+  {
+    "date": "2025-11-26",
+    "title": "Setup Iniziale",
+    "changes": [
+      "Commit iniziale e configurazione base",
+      "Implementazione griglia carte e modali base"
+    ]
+  }
+]

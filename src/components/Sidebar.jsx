@@ -1,8 +1,8 @@
-import { X, Download, LogOut, TrendingUp, Users, Dices } from 'lucide-react'
+import { X, Download, LogOut, TrendingUp, Users, Dices, History } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats, onExploreUsers, onGambling }) {
+export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats, onExploreUsers, onGambling, onShowChangelog }) {
     const [isVisible, setIsVisible] = useState(false)
     const [currentUserEmail, setCurrentUserEmail] = useState(null)
 
@@ -74,6 +74,16 @@ export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats,
                                 <Dices className="w-5 h-5 text-purple-400 group-hover:text-purple-300" />
                             </div>
                             <span className="font-medium">Gambling</span>
+                        </button>
+
+                        <button
+                            onClick={onShowChangelog}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
+                        >
+                            <div className="p-2 bg-neutral-800 group-hover:bg-neutral-700 rounded-lg transition-colors">
+                                <History className="w-5 h-5" />
+                            </div>
+                            <span className="font-medium">Changelog</span>
                         </button>
 
                         <button

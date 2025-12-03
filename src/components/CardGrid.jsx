@@ -7,6 +7,7 @@ import Sidebar from './Sidebar'
 import MissingCardsModal from './MissingCardsModal'
 import StatisticsModal from './StatisticsModal'
 import GamblingModal from './GamblingModal'
+import ChangelogModal from './ChangelogModal'
 import { supabase } from '../lib/supabaseClient'
 
 export default function CardGrid({ session, targetUserId = null, readOnly = false, onBack, onExploreUsers }) {
@@ -23,6 +24,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
     const [missingCards, setMissingCards] = useState([])
     const [showStatsModal, setShowStatsModal] = useState(false)
     const [showGamblingModal, setShowGamblingModal] = useState(false)
+    const [showChangelogModal, setShowChangelogModal] = useState(false)
     const [targetUserProfile, setTargetUserProfile] = useState(null)
 
     useEffect(() => {
@@ -129,6 +131,11 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
         })
         setMissingCards(missing)
         setShowGamblingModal(true)
+        setIsSidebarOpen(false)
+    }
+
+    const handleShowChangelog = () => {
+        setShowChangelogModal(true)
         setIsSidebarOpen(false)
     }
 
@@ -358,6 +365,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                 onShowStats={handleShowStats}
                 onExploreUsers={onExploreUsers}
                 onGambling={handleGambling}
+                onShowChangelog={handleShowChangelog}
             />
 
             <MissingCardsModal
@@ -377,6 +385,11 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                 onClose={() => setShowGamblingModal(false)}
                 missingCards={missingCards}
                 session={session}
+            />
+
+            <ChangelogModal
+                isOpen={showChangelogModal}
+                onClose={() => setShowChangelogModal(false)}
             />
         </div>
     )
