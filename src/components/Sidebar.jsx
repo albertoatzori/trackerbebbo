@@ -76,15 +76,7 @@ export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats,
                             <span className="font-medium">Gambling</span>
                         </button>
 
-                        <button
-                            onClick={onShowChangelog}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
-                        >
-                            <div className="p-2 bg-neutral-800 group-hover:bg-neutral-700 rounded-lg transition-colors">
-                                <History className="w-5 h-5" />
-                            </div>
-                            <span className="font-medium">Changelog</span>
-                        </button>
+
 
                         <button
                             onClick={onExportMissing}
@@ -110,15 +102,25 @@ export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats,
                         )}
                     </div>
 
-                    <div className="mt-auto pt-4 border-t border-neutral-800">
+                    <div className="mt-auto pt-4 border-t border-neutral-800 grid grid-cols-2 gap-3">
+                        <button
+                            onClick={onShowChangelog}
+                            className="flex flex-col items-center justify-center gap-2 px-2 py-3 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
+                        >
+                            <div className="p-2 bg-neutral-800 group-hover:bg-neutral-700 rounded-lg transition-colors">
+                                <History className="w-5 h-5" />
+                            </div>
+                            <span className="text-xs font-medium">Changelog</span>
+                        </button>
+
                         <button
                             onClick={handleSignOut}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all group"
+                            className="flex flex-col items-center justify-center gap-2 px-2 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all group"
                         >
                             <div className="p-2 bg-red-500/10 group-hover:bg-red-500/20 rounded-lg transition-colors">
                                 <LogOut className="w-5 h-5" />
                             </div>
-                            <span className="font-medium">Esci</span>
+                            <span className="text-xs font-medium">Esci</span>
                         </button>
                     </div>
                 </div>
