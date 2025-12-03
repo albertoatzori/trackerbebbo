@@ -1,8 +1,40 @@
 import { X, Copy, Check } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 export default function MissingCardsModal({ isOpen, onClose, missingCards }) {
     const [copied, setCopied] = useState(false)
+    const isBackNavigation = useRef(false)
+    const pushedState = useRef(false)
+
+    useEffect(() => {
+        if (isOpen) {
+            isBackNavigation.current = false
+            pushedState.current = false
+
+            const handlePopState = () => {
+                // User pressed back button
+                isBackNavigation.current = true
+                onClose()
+            }
+
+            // Delay adding listener to avoid Strict Mode double-mount issue
+            const timer = setTimeout(() => {
+                window.history.pushState(null, '', window.location.href)
+                pushedState.current = true
+                window.addEventListener('popstate', handlePopState)
+            }, 50)
+
+            return () => {
+                clearTimeout(timer)
+                window.removeEventListener('popstate', handlePopState)
+
+                // If closed manually (not by back button), remove the history state we pushed
+                if (!isBackNavigation.current && pushedState.current) {
+                    window.history.back()
+                }
+            }
+        }
+    }, [isOpen])
 
     if (!isOpen) return null
 
@@ -49,8 +81,8 @@ export default function MissingCardsModal({ isOpen, onClose, missingCards }) {
                     <button
                         onClick={handleCopy}
                         className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all ${copied
-                                ? 'bg-green-600 text-white shadow-lg shadow-green-600/20'
-                                : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20'
+                            ? 'bg-green-600 text-white shadow-lg shadow-green-600/20'
+                            : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20'
                             }`}
                     >
                         {copied ? (

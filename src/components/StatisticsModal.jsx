@@ -1,8 +1,41 @@
 import { X, TrendingUp, ShoppingBag, PieChart, Layers } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
 
-export default function StatisticsModal({ isOpen, onClose, userCards }) {
-    if (!isOpen) return null
+export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
+    const isBackNavigation = useRef(false)
+    const pushedState = useRef(false)
+
+    useEffect(() => {
+        if (isOpen) {
+            isBackNavigation.current = false
+            pushedState.current = false
+
+            const handlePopState = () => {
+                // User pressed back button
+                isBackNavigation.current = true
+                onClose()
+            }
+
+            // Delay adding listener to avoid Strict Mode double-mount issue
+            const timer = setTimeout(() => {
+                window.history.pushState(null, '', window.location.href)
+                pushedState.current = true
+                window.addEventListener('popstate', handlePopState)
+            }, 50)
+
+            return () => {
+                clearTimeout(timer)
+                window.removeEventListener('popstate', handlePopState)
+
+                // If closed manually (not by back button), remove the history state we pushed
+                if (!isBackNavigation.current && pushedState.current) {
+                    window.history.back()
+                }
+            }
+        }
+    }, [isOpen])
+
+
 
     const stats = useMemo(() => {
         let totalSpent = 0
@@ -16,66 +49,88 @@ export default function StatisticsModal({ isOpen, onClose, userCards }) {
         const setCounts = {}
         let totalCards = 0
 
-        Object.values(userCards).forEach(card => {
-            // Skip if explicitly missing
-            if (card.status === 'missing') return
+        try {
+            if (!userCards) throw new Error('userCards is null')
 
-            // Check if effectively owned
-            const isOwned = card.status === 'owned' || (!card.status && card.image_urls?.length > 0)
+            Object.values(userCards).forEach(card => {
+                if (!card) return
 
-            if (card.image_urls && card.image_urls.length > 0) {
-                // Iterate through each card instance (image)
-                card.image_urls.forEach(url => {
-                    const metadata = card.card_metadata?.[url] || {}
-                    const type = metadata.type
-                    const validTypes = ['sbustata', 'comprata', 'scambiata', 'regalata']
-                    const hasValidLabel = validTypes.includes(type)
+                // Skip if explicitly missing
+                if (card.status === 'missing') return
 
-                    // Count physical card ONLY if it's owned AND has a valid label
-                    if (isOwned && hasValidLabel) {
-                        totalCards++
+                // Check if effectively owned
+                const isOwned = card.status === 'owned' || (!card.status && card.image_urls?.length > 0)
 
-                        // Acquisition Stats - only count if valid type
-                        if (acquisitionCounts[type] !== undefined) {
-                            acquisitionCounts[type]++
+                if (card.image_urls && card.image_urls.length > 0) {
+                    // Iterate through each card instance (image)
+                    card.image_urls.forEach(url => {
+                        const metadata = card.card_metadata?.[url] || {}
+                        const type = metadata.type
+                        const validTypes = ['sbustata', 'comprata', 'scambiata', 'regalata']
+                        const hasValidLabel = validTypes.includes(type)
+
+                        // Count physical card ONLY if it's owned AND has a valid label
+                        if (isOwned && hasValidLabel) {
+                            totalCards++
+
+                            // Acquisition Stats - only count if valid type
+                            if (acquisitionCounts[type] !== undefined) {
+                                acquisitionCounts[type]++
+                            }
                         }
-                    }
 
-                    // Financial Stats
-                    if (type === 'comprata' && metadata.price) {
-                        const price = parseFloat(metadata.price)
-                        if (!isNaN(price)) {
-                            totalSpent += price
-                            boughtCount++
+                        // Financial Stats
+                        if (type === 'comprata' && metadata.price) {
+                            const price = parseFloat(metadata.price)
+                            if (!isNaN(price)) {
+                                totalSpent += price
+                                boughtCount++
+                            }
                         }
-                    }
 
-                    // Set Stats
-                    if (metadata.expansionSet) {
-                        const set = metadata.expansionSet.trim()
-                        if (set) {
-                            setCounts[set] = (setCounts[set] || 0) + 1
+                        // Set Stats
+                        if (metadata.expansionSet) {
+                            const set = metadata.expansionSet.trim()
+                            if (set) {
+                                setCounts[set] = (setCounts[set] || 0) + 1
+                            }
                         }
-                    }
-                })
+                    })
+                }
+            })
+
+            const avgCost = boughtCount > 0 ? totalSpent / boughtCount : 0
+
+            // Sort sets by count
+            const topSets = Object.entries(setCounts)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 5)
+
+            return {
+                totalSpent,
+                avgCost,
+                acquisitionCounts,
+                topSets,
+                totalCards
             }
-        })
-
-        const avgCost = boughtCount > 0 ? totalSpent / boughtCount : 0
-
-        // Sort sets by count
-        const topSets = Object.entries(setCounts)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 5)
-
-        return {
-            totalSpent,
-            avgCost,
-            acquisitionCounts,
-            topSets,
-            totalCards
+        } catch (error) {
+            console.error('Error calculating stats:', error)
+            return {
+                totalSpent: 0,
+                avgCost: 0,
+                acquisitionCounts: {
+                    sbustata: 0,
+                    comprata: 0,
+                    scambiata: 0,
+                    regalata: 0
+                },
+                topSets: [],
+                totalCards: 0
+            }
         }
     }, [userCards])
+
+    if (!isOpen) return null
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">

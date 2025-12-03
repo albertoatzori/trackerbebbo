@@ -17,14 +17,37 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     })
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const fileInputRef = useRef(null)
+    const isBackNavigation = useRef(false)
+    const pushedState = useRef(false)
 
     if (!pokemon) return null
 
     useEffect(() => {
         const originalStyle = window.getComputedStyle(document.body).overflow
         document.body.style.overflow = 'hidden'
+
+        const handlePopState = () => {
+            // User pressed back button
+            isBackNavigation.current = true
+            onClose()
+        }
+
+        // Delay adding listener and pushing state to avoid Strict Mode double-mount issue
+        const timer = setTimeout(() => {
+            window.history.pushState(null, '', window.location.href)
+            pushedState.current = true
+            window.addEventListener('popstate', handlePopState)
+        }, 50)
+
         return () => {
+            clearTimeout(timer)
             document.body.style.overflow = originalStyle
+            window.removeEventListener('popstate', handlePopState)
+
+            // If closed manually (not by back button), remove the history state we pushed
+            if (!isBackNavigation.current && pushedState.current) {
+                window.history.back()
+            }
         }
     }, [])
 
