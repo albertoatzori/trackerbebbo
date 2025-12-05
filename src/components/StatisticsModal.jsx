@@ -1,4 +1,4 @@
-import { X, TrendingUp, ShoppingBag, PieChart, Layers } from 'lucide-react'
+import { X, TrendingUp, ShoppingBag, PieChart, Layers, Gift, Handshake } from 'lucide-react'
 import { useMemo, useEffect, useRef } from 'react'
 
 export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
@@ -7,6 +7,9 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
 
     useEffect(() => {
         if (isOpen) {
+            const originalStyle = window.getComputedStyle(document.body).overflow
+            document.body.style.overflow = 'hidden'
+
             isBackNavigation.current = false
             pushedState.current = false
 
@@ -24,6 +27,7 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
             }, 50)
 
             return () => {
+                document.body.style.overflow = originalStyle
                 clearTimeout(timer)
                 window.removeEventListener('popstate', handlePopState)
 
@@ -47,7 +51,11 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
             regalata: 0
         }
         const setCounts = {}
+        const donorCounts = {}
+        const traderCounts = {}
         let totalCards = 0
+        let uniqueOwned = 0
+        const totalPokemon = 151
 
         try {
             if (!userCards) throw new Error('userCards is null')
@@ -60,6 +68,10 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
 
                 // Check if effectively owned
                 const isOwned = card.status === 'owned' || (!card.status && card.image_urls?.length > 0)
+
+                if (isOwned) {
+                    uniqueOwned++
+                }
 
                 if (card.image_urls && card.image_urls.length > 0) {
                     // Iterate through each card instance (image)
@@ -95,6 +107,19 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                                 setCounts[set] = (setCounts[set] || 0) + 1
                             }
                         }
+
+                        // Person Stats (Donors & Traders)
+                        if (metadata.personName) {
+                            const rawName = metadata.personName.trim()
+                            if (rawName) {
+                                const normalizedName = rawName.toLowerCase()
+                                if (type === 'regalata') {
+                                    donorCounts[normalizedName] = (donorCounts[normalizedName] || 0) + 1
+                                } else if (type === 'scambiata') {
+                                    traderCounts[normalizedName] = (traderCounts[normalizedName] || 0) + 1
+                                }
+                            }
+                        }
                     })
                 }
             })
@@ -106,12 +131,26 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 5)
 
+            // Sort donors by count
+            const topDonors = Object.entries(donorCounts)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 5)
+
+            // Sort traders by count
+            const topTraders = Object.entries(traderCounts)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 5)
+
             return {
                 totalSpent,
                 avgCost,
                 acquisitionCounts,
                 topSets,
-                totalCards
+                topDonors,
+                topTraders,
+                totalCards,
+                uniqueOwned,
+                totalPokemon
             }
         } catch (error) {
             console.error('Error calculating stats:', error)
@@ -125,7 +164,11 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                     regalata: 0
                 },
                 topSets: [],
-                totalCards: 0
+                topDonors: [],
+                topTraders: [],
+                totalCards: 0,
+                uniqueOwned: 0,
+                totalPokemon: 151
             }
         }
     }, [userCards])
@@ -154,8 +197,55 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                     </button>
                 </div>
 
+
+
                 {/* Content */}
                 <div className="p-6 overflow-y-auto space-y-8">
+
+                    {/* Collection Progress */}
+                    <section>
+                        <div className="bg-gradient-to-br from-neutral-800 to-neutral-900 p-5 rounded-2xl border border-neutral-800 shadow-xl relative overflow-hidden">
+                            {/* Background decoration */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+
+                            <div className="relative z-10 space-y-6">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wider mb-1">Progresso Kanto</h3>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-4xl font-bold text-white">{stats.uniqueOwned}</span>
+                                            <span className="text-lg text-neutral-500 font-medium">/ {stats.totalPokemon}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-3xl font-bold text-red-500">
+                                            {Math.round((stats.uniqueOwned / stats.totalPokemon) * 100)}%
+                                        </div>
+                                        <div className="text-xs text-neutral-500 font-medium mt-1">Completato</div>
+                                    </div>
+                                </div>
+
+                                {/* Progress Bar */}
+                                <div className="space-y-2">
+                                    <div className="h-3 w-full bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-red-600 to-red-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(220,38,38,0.5)]"
+                                            style={{ width: `${(stats.uniqueOwned / stats.totalPokemon) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Physical Cards Stat */}
+                                <div className="pt-4 border-t border-neutral-800/50 flex items-center justify-between">
+                                    <div>
+                                        <div className="text-sm text-neutral-300 font-medium">Carte Totali Fisiche</div>
+                                        <div className="text-xs text-neutral-500">Include doppioni e varianti</div>
+                                    </div>
+                                    <div className="text-2xl font-bold text-white">{stats.totalCards}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
                     {/* Financial Stats */}
                     <section>
@@ -191,6 +281,50 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                         </div>
                     </section>
 
+
+
+                    {/* Donor Stats */}
+                    {stats.topDonors.length > 0 && (
+                        <section>
+                            <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <Gift className="w-4 h-4" />
+                                Top Donatori
+                            </h3>
+                            <div className="space-y-2">
+                                {stats.topDonors.map(([name, count], idx) => (
+                                    <div key={name} className="flex items-center justify-between p-3 bg-neutral-800/30 rounded-lg border border-neutral-800">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs font-mono text-neutral-500 w-4">{idx + 1}</span>
+                                            <span className="text-sm font-medium text-white capitalize">{name}</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-red-400">{count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Trader Stats */}
+                    {stats.topTraders.length > 0 && (
+                        <section>
+                            <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <Handshake className="w-4 h-4" />
+                                Top Scambiatori
+                            </h3>
+                            <div className="space-y-2">
+                                {stats.topTraders.map(([name, count], idx) => (
+                                    <div key={name} className="flex items-center justify-between p-3 bg-neutral-800/30 rounded-lg border border-neutral-800">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs font-mono text-neutral-500 w-4">{idx + 1}</span>
+                                            <span className="text-sm font-medium text-white capitalize">{name}</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-red-400">{count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {/* Set Stats */}
                     {stats.topSets.length > 0 && (
                         <section>
@@ -212,16 +346,7 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                         </section>
                     )}
 
-                    {/* General Stats */}
-                    <section>
-                        <div className="bg-gradient-to-br from-red-900/20 to-neutral-900 p-4 rounded-xl border border-red-500/20 flex items-center justify-between">
-                            <div>
-                                <div className="text-sm text-red-200">Carte Totali Fisiche</div>
-                                <div className="text-xs text-red-300/60">Include doppioni e varianti</div>
-                            </div>
-                            <div className="text-3xl font-bold text-red-500">{stats.totalCards}</div>
-                        </div>
-                    </section>
+
 
                 </div>
             </div>
