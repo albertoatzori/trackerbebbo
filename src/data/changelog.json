@@ -1,5 +1,15 @@
 [
   {
+    "date": "2025-12-05",
+    "title": "Potenziamento Statistiche",
+    "changes": [
+      "Nuova sezione 'Progresso Kanto' con barra di completamento e conteggio carte uniche",
+      "Aggiunte classifiche 'Top Donatori' e 'Top Scambiatori'",
+      "Riorganizzazione layout statistiche e spostamento 'Carte Totali Fisiche'",
+      "Correzioni UI e ottimizzazione calcolo statistiche"
+    ]
+  },
+  {
     "date": "2025-12-03",
     "title": "Miglioramenti UI e Nuove Funzionalità",
     "changes": [
