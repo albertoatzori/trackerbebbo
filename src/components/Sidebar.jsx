@@ -1,8 +1,8 @@
-import { X, Download, LogOut, TrendingUp, Users, Dices, History } from 'lucide-react'
+import { X, Download, LogOut, TrendingUp, Users, Dices, History, Cat, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
-export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats, onExploreUsers, onGambling, onShowChangelog }) {
+export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats, onExploreUsers, onGambling, onShowChangelog, onCompanion, onCleanData }) {
     const [isVisible, setIsVisible] = useState(false)
     const [currentUserEmail, setCurrentUserEmail] = useState(null)
 
@@ -88,17 +88,42 @@ export default function Sidebar({ isOpen, onClose, onExportMissing, onShowStats,
                             <span className="font-medium">Lista Mancanti</span>
                         </button>
 
+                        <button
+                            onClick={onCompanion}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
+                        >
+                            <div className="p-2 bg-neutral-800 group-hover:bg-neutral-700 rounded-lg transition-colors">
+                                <Cat className="w-5 h-5 text-yellow-400 group-hover:text-yellow-300" />
+                            </div>
+                            <span className="font-medium">Compagno</span>
+                        </button>
+
                         {/* Explore Users Button - Only for specific email */}
                         {currentUserEmail === 'atzoalbo.94@gmail.com' && (
-                            <button
-                                onClick={onExploreUsers}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
-                            >
-                                <div className="p-2 bg-neutral-800 group-hover:bg-neutral-700 rounded-lg transition-colors">
-                                    <Users className="w-5 h-5" />
-                                </div>
-                                <span className="font-medium">Esplora Utenti</span>
-                            </button>
+                            <>
+                                <button
+                                    onClick={onExploreUsers}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
+                                >
+                                    <div className="p-2 bg-neutral-800 group-hover:bg-neutral-700 rounded-lg transition-colors">
+                                        <Users className="w-5 h-5" />
+                                    </div>
+                                    <span className="font-medium">Esplora Utenti</span>
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        onCleanData()
+                                        onClose()
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-xl transition-all group"
+                                >
+                                    <div className="p-2 bg-neutral-800 group-hover:bg-neutral-700 rounded-lg transition-colors">
+                                        <Sparkles className="w-5 h-5 text-yellow-500" />
+                                    </div>
+                                    <span className="font-medium">Pulisci Dati</span>
+                                </button>
+                            </>
                         )}
                     </div>
 

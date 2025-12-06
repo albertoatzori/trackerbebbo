@@ -8,6 +8,7 @@ import MissingCardsModal from './MissingCardsModal'
 import StatisticsModal from './StatisticsModal'
 import GamblingModal from './GamblingModal'
 import ChangelogModal from './ChangelogModal'
+import CompanionModal, { COMPANIONS } from './CompanionModal'
 import { supabase } from '../lib/supabaseClient'
 
 export default function CardGrid({ session, targetUserId = null, readOnly = false, onBack, onExploreUsers }) {
@@ -30,13 +31,12 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
     const [advancedFilter, setAdvancedFilter] = useState(null)
     const [selectedPeople, setSelectedPeople] = useState([])
     const [showPersonSelector, setShowPersonSelector] = useState(false)
-    const [tempSelectedPeople, setTempSelectedPeople] = useState([])
 
-    useEffect(() => {
-        // Reset sub-filters when main filter changes
-        setSelectedPeople([])
-        setTempSelectedPeople([])
-    }, [advancedFilter])
+    const [tempSelectedPeople, setTempSelectedPeople] = useState([])
+    const [showCompanionModal, setShowCompanionModal] = useState(false)
+    const [selectedCompanionId, setSelectedCompanionId] = useState(() => localStorage.getItem('selectedCompanion') || null)
+
+
 
     useEffect(() => {
         fetchData()
@@ -107,6 +107,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
         const isOwned = userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0) // Fallback for old records
 
         if (advancedFilter) {
+
             // If advanced filter is active, only show cards that have at least one image matching the filter type
             if (!isOwned || !userCard.image_urls || userCard.image_urls.length === 0) return false
 
@@ -116,7 +117,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
 
                 // Sub-filter by person (only for scambiata/regalata)
                 if ((advancedFilter === 'scambiata' || advancedFilter === 'regalata') && selectedPeople.length > 0) {
-                    return selectedPeople.includes(metadata.personName)
+                    return selectedPeople.some(p => p.toLowerCase() === metadata.personName?.trim().toLowerCase())
                 }
                 return true
             })
@@ -168,20 +169,90 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
         setIsSidebarOpen(false)
     }
 
+
+    const capitalize = (str) => {
+        if (!str) return ''
+        return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
+    }
+
+    const handleCleanData = async () => {
+        if (!confirm('Sei sicuro di voler pulire i dati? Questa operazione normalizzerà i nomi (es. ATZORI -> Atzori) e rimuoverà gli spazi extra.')) return
+
+        try {
+            setLoading(true)
+            let updatedCount = 0
+
+            for (const card of Object.values(userCards)) {
+                if (!card.card_metadata) continue
+
+                let needsUpdate = false
+                const newMetadata = { ...card.card_metadata }
+
+                Object.keys(newMetadata).forEach(url => {
+                    const meta = newMetadata[url]
+                    if (meta.personName) {
+                        const normalized = capitalize(meta.personName.trim())
+                        if (meta.personName !== normalized) {
+                            meta.personName = normalized
+                            needsUpdate = true
+                        }
+                    }
+                    if (meta.expansionSet) {
+                        const normalizedSet = meta.expansionSet.trim()
+                        if (meta.expansionSet !== normalizedSet) {
+                            meta.expansionSet = normalizedSet
+                            needsUpdate = true
+                        }
+                    }
+                })
+
+                if (needsUpdate) {
+                    const { error } = await supabase
+                        .from('cards')
+                        .update({ card_metadata: newMetadata })
+                        .eq('user_id', session.user.id)
+                        .eq('pokemon_id', card.pokemon_id)
+
+                    if (error) {
+                        console.error('Error updating card:', card.pokemon_id, error)
+                    } else {
+                        updatedCount++
+                    }
+                }
+            }
+
+            alert(`Pulizia completata! Aggiornate ${updatedCount} carte.`)
+            fetchUserCards()
+
+        } catch (error) {
+            console.error('Error cleaning data:', error)
+            alert('Errore durante la pulizia dei dati')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const getAvailablePeople = () => {
         if (advancedFilter !== 'scambiata' && advancedFilter !== 'regalata') return []
 
-        const people = new Set()
+        const peopleMap = new Map() // Normalized -> Original (Title Case preferred)
+
         Object.values(userCards).forEach(card => {
             if (!card.image_urls) return
             card.image_urls.forEach(url => {
                 const metadata = card.card_metadata?.[url]
                 if (metadata?.type === advancedFilter && metadata?.personName) {
-                    people.add(metadata.personName)
+                    const cleanName = metadata.personName.trim()
+                    const normalizedKey = cleanName.toLowerCase()
+
+                    // We prefer the version that is already Title Cased if available, or we construct it
+                    // Actually, let's just force Title Case for the list
+                    const titleCased = capitalize(cleanName)
+                    peopleMap.set(normalizedKey, titleCased)
                 }
             })
         })
-        return Array.from(people).sort()
+        return Array.from(peopleMap.values()).sort()
     }
 
     const availablePeople = getAvailablePeople()
@@ -202,6 +273,28 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
     const handleSavePersonSelection = () => {
         setSelectedPeople(tempSelectedPeople)
         setShowPersonSelector(false)
+    }
+
+    const handleCompanionSelect = (id) => {
+        setSelectedCompanionId(id)
+        if (id) {
+            localStorage.setItem('selectedCompanion', id)
+        } else {
+            localStorage.removeItem('selectedCompanion')
+        }
+    }
+
+    const currentCompanion = COMPANIONS.find(c => c.id === selectedCompanionId)
+
+    const handleStatFilterSelect = (filterType, personName = null) => {
+        setShowStatsModal(false)
+        setShowAdvancedFilters(true)
+        setAdvancedFilter(filterType)
+        if (personName) {
+            setSelectedPeople([personName])
+        } else {
+            setSelectedPeople([])
+        }
     }
 
     return (
@@ -228,25 +321,36 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                 </button>
                             )}
 
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
-                                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
+                                <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                     <circle cx="12" cy="12" r="3" />
                                     <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
                                 </svg>
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-white">
-                                    {readOnly && targetUserProfile
-                                        ? `Collezione di ${targetUserProfile.display_name || targetUserProfile.email?.split('@')[0]}`
-                                        : 'Kanto Tracker'
-                                    }
-                                </h1>
+                                <div className="flex items-center gap-2">
+                                    <h1 className="text-xl font-bold text-white">
+                                        {readOnly && targetUserProfile
+                                            ? `Collezione di ${targetUserProfile.display_name || targetUserProfile.email?.split('@')[0]}`
+                                            : 'Kanto Tracker'
+                                        }
+                                    </h1>
+                                    {currentCompanion && !readOnly && (
+                                        <div className="w-10 h-10 flex items-center justify-center">
+                                            <img
+                                                src={currentCompanion.src}
+                                                alt={currentCompanion.name}
+                                                className="w-full h-full object-contain drop-shadow-lg select-none"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                                 <p className="text-xs text-neutral-400">Pokémon Collection</p>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-2xl font-bold text-white">{stats.percentage}%</div>
-                            <div className="text-xs text-neutral-400">{stats.owned} / {stats.total}</div>
+                            <div className="text-lg font-bold text-white">{stats.percentage}%</div>
+                            <div className="text-[10px] text-neutral-400">{stats.owned} / {stats.total}</div>
                         </div>
                     </div>
 
@@ -258,7 +362,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                     setShowAdvancedFilters(!showAdvancedFilters)
                                     if (showAdvancedFilters) setAdvancedFilter(null) // Reset filter when closing
                                 }}
-                                className={`p-3 rounded-full transition-all shrink-0 ${showAdvancedFilters
+                                className={`p-2.5 rounded-full transition-all shrink-0 ${showAdvancedFilters
                                     ? 'bg-red-600 text-white shadow-lg'
                                     : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
                                     }`}
@@ -270,7 +374,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                 <input
                                     type="text"
                                     placeholder="Search Pokémon..."
-                                    className="w-full pl-12 pr-4 py-3 bg-neutral-800 border border-neutral-700 rounded-full text-white placeholder-neutral-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
+                                    className="w-full pl-12 pr-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-full text-white placeholder-neutral-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
@@ -278,12 +382,26 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                         </div>
                         <button
                             onClick={() => setShowCards(!showCards)}
-                            className={`p-3 rounded-full transition-all ${showCards
+                            className={`p-2.5 rounded-full transition-all ${showCards
                                 ? 'bg-red-600 text-white shadow-lg'
                                 : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
                                 }`}
                         >
                             {showCards ? <ImageIcon className="w-5 h-5" /> : <Grid className="w-5 h-5" />}
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (gridColumns === 3) setGridColumns(1)
+                                else if (gridColumns === 1) setGridColumns(2)
+                                else if (gridColumns === 2) setGridColumns(3)
+                            }}
+                            className="p-2.5 rounded-full bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white transition-all shadow-sm"
+                        >
+                            {gridColumns === 3 ? (
+                                <ZoomOut className="w-5 h-5" />
+                            ) : (
+                                <ZoomIn className="w-5 h-5" />
+                            )}
                         </button>
                     </div>
 
@@ -295,8 +413,11 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                     {['sbustata', 'comprata', 'scambiata', 'regalata'].map(filter => (
                                         <button
                                             key={filter}
-                                            onClick={() => setAdvancedFilter(advancedFilter === filter ? null : filter)}
-                                            className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-all ${advancedFilter === filter
+                                            onClick={() => {
+                                                setAdvancedFilter(advancedFilter === filter ? null : filter)
+                                                setSelectedPeople([])
+                                            }}
+                                            className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-all ${advancedFilter === filter
                                                 ? 'bg-red-600 text-white shadow-lg'
                                                 : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
                                                 }`}
@@ -311,7 +432,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                         <button
                                             key={filter}
                                             onClick={() => setFilterOwned(filter)}
-                                            className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-all ${filterOwned === filter
+                                            className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize whitespace-nowrap transition-all ${filterOwned === filter
                                                 ? 'bg-red-600 text-white shadow-lg'
                                                 : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
                                                 }`}
@@ -323,30 +444,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                             )}
                         </div>
 
-                        {/* Column Slider */}
-                        <div className="flex items-center gap-2 px-2 border-l border-neutral-800 pl-4 flex-1 min-w-0">
-                            <button
-                                onClick={() => setGridColumns(Math.min(3, gridColumns + 1))}
-                                className="text-neutral-500 hover:text-white transition-colors focus:outline-none"
-                            >
-                                <ZoomOut className="w-4 h-4" />
-                            </button>
-                            <input
-                                type="range"
-                                min="1"
-                                max="3"
-                                step="1"
-                                value={4 - gridColumns}
-                                onChange={(e) => setGridColumns(4 - parseInt(e.target.value))}
-                                className="w-full min-w-[2rem] h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-red-600"
-                            />
-                            <button
-                                onClick={() => setGridColumns(Math.max(1, gridColumns - 1))}
-                                className="text-neutral-500 hover:text-white transition-colors focus:outline-none"
-                            >
-                                <ZoomIn className="w-4 h-4" />
-                            </button>
-                        </div>
+
                     </div>
 
                     {/* Secondary Filter Bar (Scambiata/Regalata) */}
@@ -410,8 +508,45 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                 return url
                             }
 
+                            // Calculate matching image for stats/filter
+                            let matchingUrl = null
+                            let metadata = null
+
+                            if (isOwned && advancedFilter) {
+                                const cardMetadata = userCard?.card_metadata
+                                let matchFound = false
+
+                                // First check cover image
+                                let coverUrl = userCard.image_urls[userCard.cover_image_index || 0]
+                                let coverMetadata = cardMetadata?.[coverUrl]
+
+                                if (coverMetadata?.type === advancedFilter) {
+                                    if (selectedPeople.length === 0 || selectedPeople.some(p => p.toLowerCase() === coverMetadata.personName?.trim().toLowerCase())) {
+                                        matchingUrl = coverUrl
+                                        metadata = coverMetadata
+                                        matchFound = true
+                                    }
+                                }
+
+                                // If cover doesn't match, find the first valid one
+                                if (!matchFound) {
+                                    let foundUrl = userCard.image_urls.find(url => {
+                                        const m = cardMetadata?.[url]
+                                        if (m?.type !== advancedFilter) return false
+                                        if (selectedPeople.length > 0 && (advancedFilter === 'scambiata' || advancedFilter === 'regalata')) {
+                                            return selectedPeople.some(p => p.toLowerCase() === m.personName?.trim().toLowerCase())
+                                        }
+                                        return true
+                                    })
+                                    if (foundUrl) {
+                                        matchingUrl = foundUrl
+                                        metadata = cardMetadata?.[foundUrl]
+                                    }
+                                }
+                            }
+
                             const displayImage = (showCards && userCard?.image_urls?.length > 0)
-                                ? fixSupabaseUrl(userCard.image_urls[userCard.cover_image_index || 0])
+                                ? fixSupabaseUrl(matchingUrl || userCard.image_urls[userCard.cover_image_index || 0])
                                 : pokemon.sprites.front_default
 
                             return (
@@ -433,56 +568,22 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                         if (!isOwned) return null
 
                                         // Advanced Filter Info Badge
-                                        if (advancedFilter) {
-                                            const cardMetadata = userCard?.card_metadata
-                                            // Find the image that triggered the filter match
-                                            // Prioritize the cover image if it matches, otherwise find the first matching one
-                                            let matchFound = false
-                                            let matchingUrl = null
-                                            let metadata = null
-
-                                            // First check cover image
-                                            let coverUrl = userCard.image_urls[userCard.cover_image_index || 0]
-                                            let coverMetadata = cardMetadata?.[coverUrl]
-
-                                            if (coverMetadata?.type === advancedFilter) {
-                                                if (selectedPeople.length === 0 || selectedPeople.includes(coverMetadata.personName)) {
-                                                    matchingUrl = coverUrl
-                                                    metadata = coverMetadata
-                                                    matchFound = true
-                                                }
+                                        if (advancedFilter && metadata) {
+                                            let infoText = ''
+                                            if (advancedFilter === 'comprata' && metadata.price) {
+                                                infoText = `€${metadata.price}`
+                                            } else if ((advancedFilter === 'scambiata' || advancedFilter === 'regalata') && metadata.personName) {
+                                                infoText = metadata.personName
                                             }
 
-                                            // If cover doesn't match, find the first valid one
-                                            if (!matchFound) {
-                                                matchingUrl = userCard.image_urls.find(url => {
-                                                    const m = cardMetadata?.[url]
-                                                    if (m?.type !== advancedFilter) return false
-                                                    if (selectedPeople.length > 0 && (advancedFilter === 'scambiata' || advancedFilter === 'regalata')) {
-                                                        return selectedPeople.includes(m.personName)
-                                                    }
-                                                    return true
-                                                })
-                                                metadata = cardMetadata?.[matchingUrl]
-                                            }
-
-                                            if (metadata) {
-                                                let infoText = ''
-                                                if (advancedFilter === 'comprata' && metadata.price) {
-                                                    infoText = `€${metadata.price}`
-                                                } else if ((advancedFilter === 'scambiata' || advancedFilter === 'regalata') && metadata.personName) {
-                                                    infoText = metadata.personName
-                                                }
-
-                                                if (infoText) {
-                                                    return (
-                                                        <div className="absolute top-2 right-2 z-10 px-2 py-0.5 bg-red-600/90 backdrop-blur-sm rounded-full shadow-md">
-                                                            <span className="text-[10px] font-bold font-mono text-white truncate max-w-[80px] block">
-                                                                {infoText}
-                                                            </span>
-                                                        </div>
-                                                    )
-                                                }
+                                            if (infoText) {
+                                                return (
+                                                    <div className="absolute top-2 right-2 z-10 px-2 py-0.5 bg-red-600/90 backdrop-blur-sm rounded-full shadow-md">
+                                                        <span className="text-[10px] font-bold font-mono text-white truncate max-w-[80px] block">
+                                                            {infoText}
+                                                        </span>
+                                                    </div>
+                                                )
                                             }
                                         }
 
@@ -550,7 +651,19 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                 onShowStats={handleShowStats}
                 onExploreUsers={onExploreUsers}
                 onGambling={handleGambling}
+                onCleanData={handleCleanData}
                 onShowChangelog={handleShowChangelog}
+                onCompanion={() => {
+                    setShowCompanionModal(true)
+                    setIsSidebarOpen(false)
+                }}
+            />
+
+            <CompanionModal
+                isOpen={showCompanionModal}
+                onClose={() => setShowCompanionModal(false)}
+                onSelect={handleCompanionSelect}
+                currentCompanion={selectedCompanionId}
             />
 
             <MissingCardsModal
@@ -563,6 +676,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                 isOpen={showStatsModal}
                 onClose={() => setShowStatsModal(false)}
                 userCards={userCards}
+                onSelectFilter={handleStatFilterSelect}
             />
 
             <GamblingModal

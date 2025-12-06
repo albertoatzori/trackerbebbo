@@ -324,6 +324,12 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
         })
     }
 
+
+    const capitalize = (str) => {
+        if (!str) return ''
+        return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
+    }
+
     const handleSaveDetails = async () => {
         if (readOnly) return
         try {
@@ -335,9 +341,9 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                 [url]: {
                     type: editFormData.type,
                     price: editFormData.price,
-                    expansionSet: editFormData.expansionSet,
-                    personName: editFormData.personName,
-                    cardNumber: editFormData.cardNumber
+                    expansionSet: editFormData.expansionSet?.trim(),
+                    personName: capitalize(editFormData.personName?.trim()),
+                    cardNumber: editFormData.cardNumber?.trim()
                 }
             }
 

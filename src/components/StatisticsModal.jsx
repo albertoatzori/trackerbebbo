@@ -1,7 +1,7 @@
 import { X, TrendingUp, ShoppingBag, PieChart, Layers, Gift, Handshake } from 'lucide-react'
 import { useMemo, useEffect, useRef } from 'react'
 
-export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
+export default function StatisticsModal({ isOpen, onClose, userCards = {}, onSelectFilter }) {
     const isBackNavigation = useRef(false)
     const pushedState = useRef(false)
 
@@ -260,7 +260,7 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                             </div>
                             <div className="bg-neutral-800/50 p-4 rounded-xl border border-neutral-800">
                                 <div className="text-2xl font-bold text-white">€{stats.avgCost.toFixed(2)}</div>
-                                <div className="text-xs text-neutral-400 mt-1">Costo Medio (per carta comprata)</div>
+                                <div className="text-xs text-neutral-400 mt-1">Costo Medio</div>
                             </div>
                         </div>
                     </section>
@@ -273,10 +273,14 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                         </h3>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {Object.entries(stats.acquisitionCounts).map(([type, count]) => (
-                                <div key={type} className="bg-neutral-800/30 p-3 rounded-lg border border-neutral-800 text-center">
-                                    <div className="text-xl font-bold text-white">{count}</div>
-                                    <div className="text-xs text-neutral-400 capitalize mt-1">{type}</div>
-                                </div>
+                                <button
+                                    key={type}
+                                    onClick={() => onSelectFilter?.(type)}
+                                    className="bg-neutral-800/30 p-3 rounded-lg border border-neutral-800 text-center hover:bg-neutral-800 hover:border-red-500/50 transition-all cursor-pointer group"
+                                >
+                                    <div className="text-xl font-bold text-white group-hover:text-red-500 transition-colors">{count}</div>
+                                    <div className="text-xs text-neutral-400 capitalize mt-1 group-hover:text-neutral-300">{type}</div>
+                                </button>
                             ))}
                         </div>
                     </section>
@@ -292,13 +296,17 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                             </h3>
                             <div className="space-y-2">
                                 {stats.topDonors.map(([name, count], idx) => (
-                                    <div key={name} className="flex items-center justify-between p-3 bg-neutral-800/30 rounded-lg border border-neutral-800">
+                                    <button
+                                        key={name}
+                                        onClick={() => onSelectFilter?.('regalata', name)}
+                                        className="w-full flex items-center justify-between p-3 bg-neutral-800/30 rounded-lg border border-neutral-800 hover:bg-neutral-800 hover:border-red-500/50 transition-all cursor-pointer group"
+                                    >
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs font-mono text-neutral-500 w-4">{idx + 1}</span>
+                                            <span className="text-xs font-mono text-neutral-500 w-4 group-hover:text-red-500">{idx + 1}</span>
                                             <span className="text-sm font-medium text-white capitalize">{name}</span>
                                         </div>
                                         <span className="text-sm font-bold text-red-400">{count}</span>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         </section>
@@ -313,13 +321,17 @@ export default function StatisticsModal({ isOpen, onClose, userCards = {} }) {
                             </h3>
                             <div className="space-y-2">
                                 {stats.topTraders.map(([name, count], idx) => (
-                                    <div key={name} className="flex items-center justify-between p-3 bg-neutral-800/30 rounded-lg border border-neutral-800">
+                                    <button
+                                        key={name}
+                                        onClick={() => onSelectFilter?.('scambiata', name)}
+                                        className="w-full flex items-center justify-between p-3 bg-neutral-800/30 rounded-lg border border-neutral-800 hover:bg-neutral-800 hover:border-red-500/50 transition-all cursor-pointer group"
+                                    >
                                         <div className="flex items-center gap-3">
-                                            <span className="text-xs font-mono text-neutral-500 w-4">{idx + 1}</span>
+                                            <span className="text-xs font-mono text-neutral-500 w-4 group-hover:text-red-500">{idx + 1}</span>
                                             <span className="text-sm font-medium text-white capitalize">{name}</span>
                                         </div>
                                         <span className="text-sm font-bold text-red-400">{count}</span>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         </section>
