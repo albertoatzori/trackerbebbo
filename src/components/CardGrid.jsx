@@ -349,7 +349,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                         </div>
                                     )}
                                 </div>
-                                <p className="text-xs text-neutral-400">Pokémon Collection</p>
+                                <p className="text-xs text-neutral-400">Collezione Pokémon</p>
                             </div>
                         </div>
                         <div className="text-right">
@@ -377,7 +377,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
                                 <input
                                     type="text"
-                                    placeholder="Search Pokémon..."
+                                    placeholder="Cerca Pokémon..."
                                     className="w-full pl-12 pr-4 py-2.5 bg-neutral-800 border border-neutral-700 rounded-full text-white placeholder-neutral-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -441,7 +441,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                                 : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
                                                 }`}
                                         >
-                                            {filter}
+                                            {filter === 'all' ? 'Tutte' : filter === 'owned' ? 'Possedute' : 'Mancanti'}
                                         </button>
                                     ))}
                                 </>

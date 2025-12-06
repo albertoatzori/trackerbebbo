@@ -15,7 +15,7 @@ export default function Auth() {
             if (isSignUp) {
                 const { error } = await supabase.auth.signUp({ email, password })
                 if (error) throw error
-                alert('Check your email for the login link!')
+                alert('Controlla la tua email per il link di accesso!')
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password })
                 if (error) throw error
@@ -39,7 +39,7 @@ export default function Auth() {
                         </svg>
                     </div>
                     <h1 className="text-4xl font-bold text-white mb-2">Kanto Tracker</h1>
-                    <p className="text-neutral-400">Track your Pokémon card collection</p>
+                    <p className="text-neutral-400">Traccia la tua collezione di carte Pokémon</p>
                 </div>
 
                 {/* Card Container */}
@@ -49,25 +49,25 @@ export default function Auth() {
                         <button
                             onClick={() => setIsSignUp(false)}
                             className={`flex-1 py-2.5 px-4 rounded-full font-medium transition-all duration-200 ${!isSignUp
-                                    ? 'bg-red-600 text-white shadow-lg'
-                                    : 'text-neutral-400 hover:text-white'
+                                ? 'bg-red-600 text-white shadow-lg'
+                                : 'text-neutral-400 hover:text-white'
                                 }`}
                         >
                             <span className="flex items-center justify-center gap-2">
                                 <LogIn className="w-4 h-4" />
-                                Sign In
+                                Accedi
                             </span>
                         </button>
                         <button
                             onClick={() => setIsSignUp(true)}
                             className={`flex-1 py-2.5 px-4 rounded-full font-medium transition-all duration-200 ${isSignUp
-                                    ? 'bg-red-600 text-white shadow-lg'
-                                    : 'text-neutral-400 hover:text-white'
+                                ? 'bg-red-600 text-white shadow-lg'
+                                : 'text-neutral-400 hover:text-white'
                                 }`}
                         >
                             <span className="flex items-center justify-center gap-2">
                                 <UserPlus className="w-4 h-4" />
-                                Sign Up
+                                Registrati
                             </span>
                         </button>
                     </div>
@@ -77,7 +77,7 @@ export default function Auth() {
                         {/* Email Input */}
                         <div>
                             <label className="block text-sm font-medium text-neutral-300 mb-2">
-                                Email address
+                                Indirizzo Email
                             </label>
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
@@ -86,7 +86,7 @@ export default function Auth() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full pl-12 pr-4 py-3.5 bg-neutral-800 border border-neutral-700 rounded-2xl text-white placeholder-neutral-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
-                                    placeholder="you@example.com"
+                                    placeholder="tu@esempio.com"
                                     required
                                 />
                             </div>
@@ -122,10 +122,10 @@ export default function Auth() {
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    Processing...
+                                    Caricamento...
                                 </span>
                             ) : (
-                                isSignUp ? 'Create Account' : 'Sign In'
+                                isSignUp ? 'Crea Account' : 'Accedi'
                             )}
                         </button>
                     </form>

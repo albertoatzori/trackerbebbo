@@ -28,7 +28,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
         try {
             setUploading(true)
             if (!event.target.files || event.target.files.length === 0) {
-                throw new Error('You must select an image to upload.')
+                throw new Error('Devi selezionare un\'immagine da caricare.')
             }
 
             const originalFile = event.target.files[0]
@@ -267,7 +267,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
 
         } catch (error) {
             console.error('Catch block error:', error)
-            alert('Error deleting image: ' + error.message)
+            alert('Errore eliminazione immagine: ' + error.message)
         }
     }
 
@@ -381,7 +381,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                             <div>
                                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                     <ImageIcon className="w-5 h-5 text-red-500" />
-                                    {readOnly ? 'User Cards' : 'Your Cards'}
+                                    {readOnly ? 'Carte Utente' : 'Le Tue Carte'}
                                 </h3>
 
                                 {/* Status Toggle - Only show if not readOnly */}
@@ -394,7 +394,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                 : 'text-neutral-400 hover:text-white'
                                                 }`}
                                         >
-                                            Owned
+                                            Posseduta
                                         </button>
                                         <button
                                             onClick={() => toggleStatus('missing')}
@@ -403,7 +403,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                 : 'text-neutral-400 hover:text-white'
                                                 }`}
                                         >
-                                            Missing
+                                            Mancante
                                         </button>
                                     </div>
                                 )}
@@ -446,7 +446,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                                     rel="noopener noreferrer"
                                                                     onClick={(e) => e.stopPropagation()}
                                                                     className="bg-white rounded-full p-1.5 shadow-md hover:scale-110 transition-transform block"
-                                                                    title="Search on Google"
+                                                                    title="Cerca su Google"
                                                                 >
                                                                     <svg viewBox="0 0 24 24" className="w-4 h-4" xmlns="http://www.w3.org/2000/svg">
                                                                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -458,7 +458,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                             ) : (
                                                                 <div
                                                                     className="bg-neutral-700 rounded-full p-1.5 shadow-md cursor-not-allowed opacity-50"
-                                                                    title="Add Card Number to enable search"
+                                                                    title="Aggiungi Numero Carta per abilitare la ricerca"
                                                                     onClick={(e) => e.stopPropagation()}
                                                                 >
                                                                     <svg viewBox="0 0 24 24" className="w-4 h-4 grayscale" xmlns="http://www.w3.org/2000/svg">
@@ -475,7 +475,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                             <>
                                                                 {imageToDelete === idx ? (
                                                                     <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-20 backdrop-blur-sm">
-                                                                        <p className="text-white text-xs font-medium">Delete?</p>
+                                                                        <p className="text-white text-xs font-medium">Eliminare?</p>
                                                                         <div className="flex gap-2">
                                                                             <button
                                                                                 onClick={(e) => {
@@ -504,7 +504,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                                                             handleEditClick(idx)
                                                                         }}
                                                                         className="absolute top-2 left-2 bg-black/50 hover:bg-blue-600 rounded-full p-1.5 transition-colors z-10"
-                                                                        title="Edit details"
+                                                                        title="Modifica dettagli"
                                                                     >
                                                                         <Edit2 className="w-3 h-3 text-white" />
                                                                     </button>
@@ -555,7 +555,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                     </div>
                                 ) : (
                                     <div className="text-gray-500 italic text-sm border border-dashed border-gray-700 rounded-lg p-4 text-center">
-                                        No cards uploaded yet.
+                                        Nessuna carta caricata.
                                     </div>
                                 )}
                             </div>
@@ -577,11 +577,11 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                         className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
                                     >
                                         {uploading ? (
-                                            <span className="animate-pulse">Uploading...</span>
+                                            <span className="animate-pulse">Caricamento...</span>
                                         ) : (
                                             <>
                                                 <Upload className="w-4 h-4" />
-                                                Upload Card Photo ({userCard?.image_urls?.length || 0}/4)
+                                                Carica Foto Carta ({userCard?.image_urls?.length || 0}/4)
                                             </>
                                         )}
                                     </button>
@@ -606,7 +606,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                     <div className="bg-neutral-900 rounded-2xl border border-neutral-800 shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="p-4 border-b border-neutral-800 flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <h3 className="text-lg font-bold text-white">Edit Card Details</h3>
+                                <h3 className="text-lg font-bold text-white">Modifica Dettagli Carta</h3>
                                 <button
                                     onClick={resetForm}
                                     disabled={!editFormData.type && !editFormData.price && !editFormData.expansionSet && !editFormData.personName && !editFormData.cardNumber}
@@ -614,7 +614,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                         ? 'text-neutral-700 cursor-not-allowed'
                                         : 'text-neutral-500 hover:text-white hover:bg-neutral-800'
                                         }`}
-                                    title="Reset Info"
+                                    title="Resetta Info"
                                 >
                                     <RotateCcw className="w-4 h-4" />
                                 </button>
@@ -630,7 +630,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                         <div className="p-6 space-y-4">
                             {/* Acquisition Type */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-neutral-400">Acquisition Type</label>
+                                <label className="text-sm font-medium text-neutral-400">Tipo di Acquisizione</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {['sbustata', 'comprata', 'scambiata', 'regalata'].map((type) => (
                                         <button
@@ -650,7 +650,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                             {/* Price Input (Conditional) */}
                             {editFormData.type === 'comprata' && (
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-neutral-400">Price (€)</label>
+                                    <label className="text-sm font-medium text-neutral-400">Prezzo (€)</label>
                                     <input
                                         type="number"
                                         value={editFormData.price}
@@ -664,12 +664,12 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                             {/* Person Name Input (Conditional) */}
                             {(editFormData.type === 'scambiata' || editFormData.type === 'regalata') && (
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-neutral-400">Person Name</label>
+                                    <label className="text-sm font-medium text-neutral-400">Nome Persona</label>
                                     <input
                                         type="text"
                                         value={editFormData.personName}
                                         onChange={(e) => setEditFormData(prev => ({ ...prev, personName: e.target.value }))}
-                                        placeholder="Enter name..."
+                                        placeholder="Inserisci nome..."
                                         className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white focus:outline-none focus:border-red-500"
                                     />
                                 </div>
@@ -677,24 +677,24 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
 
                             {/* Expansion Set */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-neutral-400">Expansion Set</label>
+                                <label className="text-sm font-medium text-neutral-400">Set Espansione</label>
                                 <input
                                     type="text"
                                     value={editFormData.expansionSet}
                                     onChange={(e) => setEditFormData(prev => ({ ...prev, expansionSet: e.target.value }))}
-                                    placeholder="Enter set name..."
+                                    placeholder="Inserisci nome set..."
                                     className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white focus:outline-none focus:border-red-500"
                                 />
                             </div>
 
                             {/* Card Number */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-neutral-400">Card Number</label>
+                                <label className="text-sm font-medium text-neutral-400">Numero Carta</label>
                                 <input
                                     type="text"
                                     value={editFormData.cardNumber}
                                     onChange={(e) => setEditFormData(prev => ({ ...prev, cardNumber: e.target.value }))}
-                                    placeholder="e.g. 151/165"
+                                    placeholder="es. 151/165"
                                     className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white focus:outline-none focus:border-red-500"
                                 />
                             </div>
@@ -703,12 +703,12 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                         <div className="p-4 border-t border-neutral-800 flex justify-between items-center bg-neutral-900">
                             {showDeleteConfirm ? (
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm text-white font-medium">Confirm delete?</span>
+                                    <span className="text-sm text-white font-medium">Confermi eliminazione?</span>
                                     <button
                                         onClick={() => deleteImage(editingImage)}
                                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                                     >
-                                        Yes
+                                        Sì
                                     </button>
                                     <button
                                         onClick={() => setShowDeleteConfirm(false)}
@@ -723,7 +723,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                     className="flex items-center gap-2 text-red-500 hover:text-red-400 font-medium text-sm px-2 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
-                                    Delete Picture
+                                    Elimina Foto
                                 </button>
                             )}
 
@@ -731,7 +731,7 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
                                 onClick={handleSaveDetails}
                                 className="bg-white text-black hover:bg-neutral-200 px-6 py-2 rounded-lg font-bold transition-colors"
                             >
-                                Save
+                                Salva
                             </button>
                         </div>
                     </div>

@@ -73,7 +73,7 @@ export default function PokemonModalReadOnly({ pokemon, onClose, userCard }) {
                             <div>
                                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                     <ImageIcon className="w-5 h-5 text-red-500" />
-                                    User Cards
+                                    Carte Utente
                                 </h3>
 
                                 {userCard?.image_urls?.length > 0 ? (
@@ -98,7 +98,7 @@ export default function PokemonModalReadOnly({ pokemon, onClose, userCard }) {
                                                             rel="noopener noreferrer"
                                                             onClick={(e) => e.stopPropagation()}
                                                             className="bg-white rounded-full p-1.5 shadow-md hover:scale-110 transition-transform block"
-                                                            title="Search on Google"
+                                                            title="Cerca su Google"
                                                         >
                                                             <svg viewBox="0 0 24 24" className="w-4 h-4" xmlns="http://www.w3.org/2000/svg">
                                                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -110,7 +110,7 @@ export default function PokemonModalReadOnly({ pokemon, onClose, userCard }) {
                                                     ) : (
                                                         <div
                                                             className="bg-neutral-700 rounded-full p-1.5 shadow-md cursor-not-allowed opacity-50"
-                                                            title="Add Card Number to enable search"
+                                                            title="Numero Carta non disponibile"
                                                             onClick={(e) => e.stopPropagation()}
                                                         >
                                                             <svg viewBox="0 0 24 24" className="w-4 h-4 grayscale" xmlns="http://www.w3.org/2000/svg">
@@ -164,7 +164,7 @@ export default function PokemonModalReadOnly({ pokemon, onClose, userCard }) {
                                     </div>
                                 ) : (
                                     <div className="text-gray-500 italic text-sm border border-dashed border-gray-700 rounded-lg p-8 text-center">
-                                        No cards uploaded yet.
+                                        Nessuna carta caricata.
                                     </div>
                                 )}
                             </div>
