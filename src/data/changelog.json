@@ -6,10 +6,13 @@
       "Aggiunto sistema 'Compagno d'avventura' che appare nel titolo",
       "Nuova anteprima carte con priorità all'immagine filtrata",
       "Ridotto il padding della barra di ricerca e dei filtri per ottimizzare lo spazio",
+      "Ripristinata la grandezza originale del logo Kanto Tracker",
       "Correzione automatica duplicati nomi nei filtri (trimming spazi e normalizzazione maiuscole)",
       "Aggiunto strumento 'Pulisci Dati' nel menu laterale (solo admin)",
       "Integrazione filtri cliccando sulle categorie nelle Statistiche",
-      "Fix: Risolto bug visualizzazione immagine anteprima quando un filtro è attivo"
+      "Fix: Risolto bug visualizzazione immagine anteprima quando un filtro è attivo",
+      "Easter Egg: Ho-Oh & Sparkles!",
+      "Fix: Disabilitato lo scroll della pagina quando il modale compagno è aperto"
     ]
   },
   {

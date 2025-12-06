@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 
@@ -27,6 +28,17 @@ const COMPANIONS = [
 ]
 
 export default function CompanionModal({ isOpen, onClose, onSelect, currentCompanion }) {
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = 'unset'
+        }
+        return () => {
+            document.body.style.overflow = 'unset'
+        }
+    }, [isOpen])
+
     if (!isOpen) return null
 
     return (
@@ -55,8 +67,8 @@ export default function CompanionModal({ isOpen, onClose, onSelect, currentCompa
                                 onClose()
                             }}
                             className={`group relative p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col items-center gap-3 ${!currentCompanion
-                                    ? 'bg-neutral-800 border-red-500 shadow-lg shadow-red-500/20'
-                                    : 'bg-neutral-900/50 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700'
+                                ? 'bg-neutral-800 border-red-500 shadow-lg shadow-red-500/20'
+                                : 'bg-neutral-900/50 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700'
                                 }`}
                         >
                             <div className="relative w-20 h-20 flex items-center justify-center">

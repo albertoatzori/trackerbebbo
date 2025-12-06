@@ -9,6 +9,9 @@ import StatisticsModal from './StatisticsModal'
 import GamblingModal from './GamblingModal'
 import ChangelogModal from './ChangelogModal'
 import CompanionModal, { COMPANIONS } from './CompanionModal'
+import hoOhGif from '../assets/easter-egg/ho-oh.gif'
+import sparklesGif from '../assets/easter-egg/sparkles.gif'
+import pokeballLogo from '../assets/img/pokeball.png'
 import { supabase } from '../lib/supabaseClient'
 
 export default function CardGrid({ session, targetUserId = null, readOnly = false, onBack, onExploreUsers }) {
@@ -35,6 +38,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
     const [tempSelectedPeople, setTempSelectedPeople] = useState([])
     const [showCompanionModal, setShowCompanionModal] = useState(false)
     const [selectedCompanionId, setSelectedCompanionId] = useState(() => localStorage.getItem('selectedCompanion') || null)
+    const [showEasterEgg, setShowEasterEgg] = useState(false)
 
 
 
@@ -321,11 +325,11 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                 </button>
                             )}
 
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
-                                <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="3" />
-                                    <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
-                                </svg>
+                            <div
+                                className="w-10 h-10 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                                onClick={() => setShowEasterEgg(true)}
+                            >
+                                <img src={pokeballLogo} alt="Logo" className="w-full h-full object-contain drop-shadow-md" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
@@ -448,183 +452,187 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                     </div>
 
                     {/* Secondary Filter Bar (Scambiata/Regalata) */}
-                    {(advancedFilter === 'scambiata' || advancedFilter === 'regalata') && (
-                        <div className="flex items-center gap-2 overflow-hidden py-1">
-                            <div className="flex gap-1.5 shrink-0 pr-2 border-r border-neutral-800">
-                                <button
-                                    onClick={() => setSelectedPeople([])}
-                                    className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${selectedPeople.length === 0
-                                        ? 'bg-white text-black'
-                                        : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
-                                        }`}
-                                >
-                                    Tutti
-                                </button>
-                                <button
-                                    onClick={handleOpenPersonSelector}
-                                    className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${selectedPeople.length > 0 || showPersonSelector
-                                        ? 'bg-white text-black'
-                                        : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
-                                        }`}
-                                >
-                                    Personalizza {selectedPeople.length > 0 && `(${selectedPeople.length})`}
-                                </button>
+                    {
+                        (advancedFilter === 'scambiata' || advancedFilter === 'regalata') && (
+                            <div className="flex items-center gap-2 overflow-hidden py-1">
+                                <div className="flex gap-1.5 shrink-0 pr-2 border-r border-neutral-800">
+                                    <button
+                                        onClick={() => setSelectedPeople([])}
+                                        className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${selectedPeople.length === 0
+                                            ? 'bg-white text-black'
+                                            : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
+                                            }`}
+                                    >
+                                        Tutti
+                                    </button>
+                                    <button
+                                        onClick={handleOpenPersonSelector}
+                                        className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${selectedPeople.length > 0 || showPersonSelector
+                                            ? 'bg-white text-black'
+                                            : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
+                                            }`}
+                                    >
+                                        Personalizza {selectedPeople.length > 0 && `(${selectedPeople.length})`}
+                                    </button>
+                                </div>
+                                <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                                    {selectedPeople.map(person => (
+                                        <span key={person} className="px-2 py-1 bg-neutral-800 text-white text-[10px] rounded-md whitespace-nowrap border border-neutral-700">
+                                            {person}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-                                {selectedPeople.map(person => (
-                                    <span key={person} className="px-2 py-1 bg-neutral-800 text-white text-[10px] rounded-md whitespace-nowrap border border-neutral-700">
-                                        {person}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
+                        )
+                    }
+                </div >
+            </div >
 
             {/* Grid */}
-            <div className="max-w-7xl mx-auto p-4">
-                {loading ? (
-                    <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent"></div>
-                    </div>
-                ) : (
-                    <div className={`grid gap-4 ${gridColumns === 1 ? 'grid-cols-1 max-w-md mx-auto' :
-                        gridColumns === 2 ? 'grid-cols-2' :
-                            'grid-cols-3'
-                        }`}>
-                        {filteredPokemon.map(pokemon => {
-                            const userCard = userCards[pokemon.id]
-                            const isOwned = userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0)
-                            const fixSupabaseUrl = (url) => {
-                                if (!url) return url
-                                // Fix URLs for both 'Carte' and old 'pokemon-cards' bucket names
-                                if (url.includes('/storage/v1/object/Carte/') && !url.includes('/public/')) {
-                                    return url.replace('/object/Carte/', '/object/public/Carte/')
-                                }
-                                if (url.includes('/storage/v1/object/pokemon-cards/') && !url.includes('/public/')) {
-                                    return url.replace('/object/pokemon-cards/', '/object/public/pokemon-cards/')
-                                }
-                                return url
-                            }
-
-                            // Calculate matching image for stats/filter
-                            let matchingUrl = null
-                            let metadata = null
-
-                            if (isOwned && advancedFilter) {
-                                const cardMetadata = userCard?.card_metadata
-                                let matchFound = false
-
-                                // First check cover image
-                                let coverUrl = userCard.image_urls[userCard.cover_image_index || 0]
-                                let coverMetadata = cardMetadata?.[coverUrl]
-
-                                if (coverMetadata?.type === advancedFilter) {
-                                    if (selectedPeople.length === 0 || selectedPeople.some(p => p.toLowerCase() === coverMetadata.personName?.trim().toLowerCase())) {
-                                        matchingUrl = coverUrl
-                                        metadata = coverMetadata
-                                        matchFound = true
+            < div className="max-w-7xl mx-auto p-4" >
+                {
+                    loading ? (
+                        <div className="flex justify-center py-20" >
+                            <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent"></div>
+                        </div>
+                    ) : (
+                        <div className={`grid gap-4 ${gridColumns === 1 ? 'grid-cols-1 max-w-md mx-auto' :
+                            gridColumns === 2 ? 'grid-cols-2' :
+                                'grid-cols-3'
+                            }`}>
+                            {filteredPokemon.map(pokemon => {
+                                const userCard = userCards[pokemon.id]
+                                const isOwned = userCard?.status === 'owned' || (!userCard?.status && userCard?.image_urls?.length > 0)
+                                const fixSupabaseUrl = (url) => {
+                                    if (!url) return url
+                                    // Fix URLs for both 'Carte' and old 'pokemon-cards' bucket names
+                                    if (url.includes('/storage/v1/object/Carte/') && !url.includes('/public/')) {
+                                        return url.replace('/object/Carte/', '/object/public/Carte/')
                                     }
+                                    if (url.includes('/storage/v1/object/pokemon-cards/') && !url.includes('/public/')) {
+                                        return url.replace('/object/pokemon-cards/', '/object/public/pokemon-cards/')
+                                    }
+                                    return url
                                 }
 
-                                // If cover doesn't match, find the first valid one
-                                if (!matchFound) {
-                                    let foundUrl = userCard.image_urls.find(url => {
-                                        const m = cardMetadata?.[url]
-                                        if (m?.type !== advancedFilter) return false
-                                        if (selectedPeople.length > 0 && (advancedFilter === 'scambiata' || advancedFilter === 'regalata')) {
-                                            return selectedPeople.some(p => p.toLowerCase() === m.personName?.trim().toLowerCase())
+                                // Calculate matching image for stats/filter
+                                let matchingUrl = null
+                                let metadata = null
+
+                                if (isOwned && advancedFilter) {
+                                    const cardMetadata = userCard?.card_metadata
+                                    let matchFound = false
+
+                                    // First check cover image
+                                    let coverUrl = userCard.image_urls[userCard.cover_image_index || 0]
+                                    let coverMetadata = cardMetadata?.[coverUrl]
+
+                                    if (coverMetadata?.type === advancedFilter) {
+                                        if (selectedPeople.length === 0 || selectedPeople.some(p => p.toLowerCase() === coverMetadata.personName?.trim().toLowerCase())) {
+                                            matchingUrl = coverUrl
+                                            metadata = coverMetadata
+                                            matchFound = true
                                         }
-                                        return true
-                                    })
-                                    if (foundUrl) {
-                                        matchingUrl = foundUrl
-                                        metadata = cardMetadata?.[foundUrl]
+                                    }
+
+                                    // If cover doesn't match, find the first valid one
+                                    if (!matchFound) {
+                                        let foundUrl = userCard.image_urls.find(url => {
+                                            const m = cardMetadata?.[url]
+                                            if (m?.type !== advancedFilter) return false
+                                            if (selectedPeople.length > 0 && (advancedFilter === 'scambiata' || advancedFilter === 'regalata')) {
+                                                return selectedPeople.some(p => p.toLowerCase() === m.personName?.trim().toLowerCase())
+                                            }
+                                            return true
+                                        })
+                                        if (foundUrl) {
+                                            matchingUrl = foundUrl
+                                            metadata = cardMetadata?.[foundUrl]
+                                        }
                                     }
                                 }
-                            }
 
-                            const displayImage = (showCards && userCard?.image_urls?.length > 0)
-                                ? fixSupabaseUrl(matchingUrl || userCard.image_urls[userCard.cover_image_index || 0])
-                                : pokemon.sprites.front_default
+                                const displayImage = (showCards && userCard?.image_urls?.length > 0)
+                                    ? fixSupabaseUrl(matchingUrl || userCard.image_urls[userCard.cover_image_index || 0])
+                                    : pokemon.sprites.front_default
 
-                            return (
-                                <div
-                                    key={pokemon.id}
-                                    onClick={() => setSelectedPokemon(pokemon)}
-                                    className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${isOwned
-                                        ? 'bg-neutral-900 ring-2 ring-red-500 shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30 hover:-translate-y-1'
-                                        : 'bg-neutral-900/50 hover:bg-neutral-900 hover:shadow-lg hover:-translate-y-0.5'
-                                        }`}
-                                >
-                                    <div className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded-full">
-                                        <span className="text-[10px] font-mono text-white/80">
-                                            #{String(pokemon.id).padStart(3, '0')}
-                                        </span>
-                                    </div>
+                                return (
+                                    <div
+                                        key={pokemon.id}
+                                        onClick={() => setSelectedPokemon(pokemon)}
+                                        className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 ${isOwned
+                                            ? 'bg-neutral-900 ring-2 ring-red-500 shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30 hover:-translate-y-1'
+                                            : 'bg-neutral-900/50 hover:bg-neutral-900 hover:shadow-lg hover:-translate-y-0.5'
+                                            }`}
+                                    >
+                                        <div className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded-full">
+                                            <span className="text-[10px] font-mono text-white/80">
+                                                #{String(pokemon.id).padStart(3, '0')}
+                                            </span>
+                                        </div>
 
-                                    {(() => {
-                                        if (!isOwned) return null
+                                        {(() => {
+                                            if (!isOwned) return null
 
-                                        // Advanced Filter Info Badge
-                                        if (advancedFilter && metadata) {
-                                            let infoText = ''
-                                            if (advancedFilter === 'comprata' && metadata.price) {
-                                                infoText = `€${metadata.price}`
-                                            } else if ((advancedFilter === 'scambiata' || advancedFilter === 'regalata') && metadata.personName) {
-                                                infoText = metadata.personName
+                                            // Advanced Filter Info Badge
+                                            if (advancedFilter && metadata) {
+                                                let infoText = ''
+                                                if (advancedFilter === 'comprata' && metadata.price) {
+                                                    infoText = `€${metadata.price}`
+                                                } else if ((advancedFilter === 'scambiata' || advancedFilter === 'regalata') && metadata.personName) {
+                                                    infoText = metadata.personName
+                                                }
+
+                                                if (infoText) {
+                                                    return (
+                                                        <div className="absolute top-2 right-2 z-10 px-2 py-0.5 bg-red-600/90 backdrop-blur-sm rounded-full shadow-md">
+                                                            <span className="text-[10px] font-bold font-mono text-white truncate max-w-[80px] block">
+                                                                {infoText}
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                }
                                             }
 
-                                            if (infoText) {
+                                            const hasSingleImage = userCard?.image_urls?.length === 1
+                                            const singleImageUrl = userCard?.image_urls?.[0]
+                                            const hasMetadata = userCard?.card_metadata?.[singleImageUrl]?.type
+
+                                            if (hasSingleImage && !hasMetadata) {
                                                 return (
-                                                    <div className="absolute top-2 right-2 z-10 px-2 py-0.5 bg-red-600/90 backdrop-blur-sm rounded-full shadow-md">
-                                                        <span className="text-[10px] font-bold font-mono text-white truncate max-w-[80px] block">
-                                                            {infoText}
-                                                        </span>
+                                                    <div className="absolute top-2 right-2 z-10 bg-yellow-500 rounded-full p-1 shadow-lg animate-pulse">
+                                                        <AlertTriangle className="w-3 h-3 text-black" />
                                                     </div>
                                                 )
                                             }
-                                        }
+                                            return null
+                                        })()}
 
-                                        const hasSingleImage = userCard?.image_urls?.length === 1
-                                        const singleImageUrl = userCard?.image_urls?.[0]
-                                        const hasMetadata = userCard?.card_metadata?.[singleImageUrl]?.type
+                                        <div className="absolute inset-0 flex items-center justify-center p-4">
+                                            <img
+                                                src={displayImage}
+                                                alt={pokemon.name}
+                                                className={`w-full h-full object-contain transition-all duration-300 ${!showCards || !isOwned ? 'pixelated opacity-80' : ''
+                                                    }`}
+                                                loading="lazy"
+                                            />
+                                        </div>
 
-                                        if (hasSingleImage && !hasMetadata) {
-                                            return (
-                                                <div className="absolute top-2 right-2 z-10 bg-yellow-500 rounded-full p-1 shadow-lg animate-pulse">
-                                                    <AlertTriangle className="w-3 h-3 text-black" />
-                                                </div>
-                                            )
-                                        }
-                                        return null
-                                    })()}
-
-                                    <div className="absolute inset-0 flex items-center justify-center p-4">
-                                        <img
-                                            src={displayImage}
-                                            alt={pokemon.name}
-                                            className={`w-full h-full object-contain transition-all duration-300 ${!showCards || !isOwned ? 'pixelated opacity-80' : ''
-                                                }`}
-                                            loading="lazy"
-                                        />
+                                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3 pt-8">
+                                            <p className="text-sm font-medium capitalize truncate text-white">
+                                                {pokemon.name}
+                                            </p>
+                                        </div>
                                     </div>
-
-                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3 pt-8">
-                                        <p className="text-sm font-medium capitalize truncate text-white">
-                                            {pokemon.name}
-                                        </p>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                )}
-            </div>
+                                )
+                            })}
+                        </div>
+                    )
+                }
+            </div >
 
             {/* Modals */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {selectedPokemon && (
                     readOnly ? (
                         <PokemonModalReadOnly
@@ -642,7 +650,7 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                         />
                     )
                 )}
-            </AnimatePresence>
+            </AnimatePresence >
 
             <Sidebar
                 isOpen={isSidebarOpen}
@@ -758,6 +766,33 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                 )}
             </AnimatePresence>
 
-        </div>
+            {/* Easter Egg Animation */}
+            <AnimatePresence>
+                {showEasterEgg && (
+                    <motion.div
+                        initial={{ x: '100vw', top: '62.5%', scale: 0.5, rotate: 3 }}
+                        animate={{ x: '-100vw', top: '37.5%', scale: 1, rotate: 3 }}
+                        exit={{ x: '-100vw' }}
+                        transition={{ duration: 4, ease: "linear" }}
+                        onAnimationComplete={() => setShowEasterEgg(false)}
+                        className="fixed left-0 z-[100] pointer-events-none w-64 h-64"
+                    >
+                        <div className="relative w-full h-full">
+                            <img
+                                src={hoOhGif}
+                                alt="Ho-Oh"
+                                className="absolute inset-0 w-full h-full object-contain z-20"
+                            />
+                            <img
+                                src={sparklesGif}
+                                alt="Sparkles"
+                                className="absolute inset-0 w-full h-full object-contain z-10 scale-150 opacity-80 mix-blend-screen"
+                            />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+        </div >
     )
 }
