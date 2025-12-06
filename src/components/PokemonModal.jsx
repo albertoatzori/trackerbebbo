@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Upload, Image as ImageIcon, Check, Trash2, Edit2, RotateCcw } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { compressImage } from '../utils/imageCompression'
+import { useModalBack } from '../hooks/useModalBack'
 
 export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, session, readOnly = false }) {
     const [uploading, setUploading] = useState(false)
@@ -17,39 +18,10 @@ export default function PokemonModal({ pokemon, onClose, userCard, onUpdate, ses
     })
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const fileInputRef = useRef(null)
-    const isBackNavigation = useRef(false)
-    const pushedState = useRef(false)
+
+    useModalBack(!!pokemon, onClose)
 
     if (!pokemon) return null
-
-    useEffect(() => {
-        const originalStyle = window.getComputedStyle(document.body).overflow
-        document.body.style.overflow = 'hidden'
-
-        const handlePopState = () => {
-            // User pressed back button
-            isBackNavigation.current = true
-            onClose()
-        }
-
-        // Delay adding listener and pushing state to avoid Strict Mode double-mount issue
-        const timer = setTimeout(() => {
-            window.history.pushState(null, '', window.location.href)
-            pushedState.current = true
-            window.addEventListener('popstate', handlePopState)
-        }, 50)
-
-        return () => {
-            clearTimeout(timer)
-            document.body.style.overflow = originalStyle
-            window.removeEventListener('popstate', handlePopState)
-
-            // If closed manually (not by back button), remove the history state we pushed
-            if (!isBackNavigation.current && pushedState.current) {
-                window.history.back()
-            }
-        }
-    }, [])
 
     const handleUpload = async (event) => {
         if (readOnly) return

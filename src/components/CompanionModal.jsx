@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useModalBack } from '../hooks/useModalBack'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 
@@ -28,16 +28,7 @@ const COMPANIONS = [
 ]
 
 export default function CompanionModal({ isOpen, onClose, onSelect, currentCompanion }) {
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden'
-        } else {
-            document.body.style.overflow = 'unset'
-        }
-        return () => {
-            document.body.style.overflow = 'unset'
-        }
-    }, [isOpen])
+    useModalBack(isOpen, onClose)
 
     if (!isOpen) return null
 

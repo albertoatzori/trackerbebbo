@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Dices, RefreshCw, Sparkles } from 'lucide-react'
+import { useModalBack } from '../hooks/useModalBack'
 
 export default function GamblingModal({ isOpen, onClose, missingCards, session }) {
     const [gameState, setGameState] = useState('idle') // idle, animating, result
@@ -12,38 +13,8 @@ export default function GamblingModal({ isOpen, onClose, missingCards, session }
     const [warningMessage, setWarningMessage] = useState(null)
     const [hasPlayedToday, setHasPlayedToday] = useState(false)
     const animationRef = useRef(null)
-    const isBackNavigation = useRef(false)
-    const pushedState = useRef(false)
 
-    useEffect(() => {
-        if (isOpen) {
-            isBackNavigation.current = false
-            pushedState.current = false
-
-            const handlePopState = () => {
-                // User pressed back button
-                isBackNavigation.current = true
-                onClose()
-            }
-
-            // Delay adding listener to avoid Strict Mode double-mount issue
-            const timer = setTimeout(() => {
-                window.history.pushState(null, '', window.location.href)
-                pushedState.current = true
-                window.addEventListener('popstate', handlePopState)
-            }, 50)
-
-            return () => {
-                clearTimeout(timer)
-                window.removeEventListener('popstate', handlePopState)
-
-                // If closed manually (not by back button), remove the history state we pushed
-                if (!isBackNavigation.current && pushedState.current) {
-                    window.history.back()
-                }
-            }
-        }
-    }, [isOpen])
+    useModalBack(isOpen, onClose)
 
     useEffect(() => {
         if (isOpen) {
@@ -66,17 +37,6 @@ export default function GamblingModal({ isOpen, onClose, missingCards, session }
         }
     }, [isOpen])
 
-    // Lock body scroll when modal is open
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden'
-        } else {
-            document.body.style.overflow = 'unset'
-        }
-        return () => {
-            document.body.style.overflow = 'unset'
-        }
-    }, [isOpen])
 
     const fetchCard = async (pokemonData) => {
         setSearchingCard(true)

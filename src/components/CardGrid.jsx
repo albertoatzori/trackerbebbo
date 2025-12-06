@@ -402,9 +402,9 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                             className="p-2.5 rounded-full bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white transition-all shadow-sm"
                         >
                             {gridColumns === 3 ? (
-                                <ZoomOut className="w-5 h-5" />
-                            ) : (
                                 <ZoomIn className="w-5 h-5" />
+                            ) : (
+                                <ZoomOut className="w-5 h-5" />
                             )}
                         </button>
                     </div>
@@ -565,9 +565,12 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                             : 'bg-neutral-900/50 hover:bg-neutral-900 hover:shadow-lg hover:-translate-y-0.5'
                                             }`}
                                     >
-                                        <div className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded-full">
-                                            <span className="text-[10px] font-mono text-white/80">
+                                        <div className="absolute top-2 left-2 z-10 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded-full flex items-center gap-1.5 max-w-[calc(100%-16px)]">
+                                            <span className="text-[10px] font-mono text-white/60">
                                                 #{String(pokemon.id).padStart(3, '0')}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-white capitalize truncate leading-tight pb-[1px]">
+                                                {pokemon.name}
                                             </span>
                                         </div>
 
@@ -585,8 +588,8 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
 
                                                 if (infoText) {
                                                     return (
-                                                        <div className="absolute top-2 right-2 z-10 px-2 py-0.5 bg-red-600/90 backdrop-blur-sm rounded-full shadow-md">
-                                                            <span className="text-[10px] font-bold font-mono text-white truncate max-w-[80px] block">
+                                                        <div className="absolute bottom-2 left-2 z-10 px-1.5 py-0.5 bg-red-600/90 backdrop-blur-sm rounded-full shadow-md max-w-[calc(100%-16px)]">
+                                                            <span className="text-[10px] font-bold font-mono text-white truncate block leading-tight pb-[1px]">
                                                                 {infoText}
                                                             </span>
                                                         </div>
@@ -618,11 +621,6 @@ export default function CardGrid({ session, targetUserId = null, readOnly = fals
                                             />
                                         </div>
 
-                                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3 pt-8">
-                                            <p className="text-sm font-medium capitalize truncate text-white">
-                                                {pokemon.name}
-                                            </p>
-                                        </div>
                                     </div>
                                 )
                             })}

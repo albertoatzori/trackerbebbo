@@ -1,42 +1,9 @@
 import { X, History, Calendar, GitCommit } from 'lucide-react'
-import { useEffect, useRef } from 'react'
 import changelogData from '../data/changelog.json'
+import { useModalBack } from '../hooks/useModalBack'
 
 export default function ChangelogModal({ isOpen, onClose }) {
-    const isBackNavigation = useRef(false)
-    const pushedState = useRef(false)
-
-    useEffect(() => {
-        if (isOpen) {
-            isBackNavigation.current = false
-            pushedState.current = false
-            document.body.style.overflow = 'hidden'
-
-            const handlePopState = () => {
-                // User pressed back button
-                isBackNavigation.current = true
-                onClose()
-            }
-
-            // Delay adding listener to avoid Strict Mode double-mount issue
-            const timer = setTimeout(() => {
-                window.history.pushState(null, '', window.location.href)
-                pushedState.current = true
-                window.addEventListener('popstate', handlePopState)
-            }, 50)
-
-            return () => {
-                clearTimeout(timer)
-                window.removeEventListener('popstate', handlePopState)
-                document.body.style.overflow = 'unset'
-
-                // If closed manually (not by back button), remove the history state we pushed
-                if (!isBackNavigation.current && pushedState.current) {
-                    window.history.back()
-                }
-            }
-        }
-    }, [isOpen])
+    useModalBack(isOpen, onClose)
 
     if (!isOpen) return null
 

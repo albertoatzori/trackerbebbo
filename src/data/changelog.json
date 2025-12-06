@@ -1,6 +1,17 @@
 [
   {
     "date": "2025-12-06",
+    "title": "Navigazione Back & Refactoring Layout",
+    "changes": [
+      "Implementata gestione tasto 'Indietro' per chiudere tutti i modali (Companion, Pokemon, Statistiche, ecc.)",
+      "Creato hook personalizzato 'useModalBack' per standardizzare la navigazione",
+      "Refactoring layout Griglia Carte: Nome Pokemon spostato nel badge in alto a sinistra insieme al numero",
+      "Spostato badge filtri (prezzo/nome) in basso a sinistra per evitare sovrapposizioni",
+      "Rimosso overlay sfumato inferiore per un look più pulito"
+    ]
+  },
+  {
+    "date": "2025-12-06",
     "title": "Companion, Filtri & UI",
     "changes": [
       "Aggiunto sistema 'Compagno d'avventura' che appare nel titolo",
